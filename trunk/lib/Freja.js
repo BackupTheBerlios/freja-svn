@@ -34,7 +34,7 @@ if (typeof(Freja) == "undefined") {
 	Freja = {};
 }
 Freja.NAME = "Freja";
-Freja.VERSION = "0.0";
+Freja.VERSION = "2.0.alpha";
 Freja.__repr__ = function () {
 	return "[" + this.NAME + " " + this.VERSION + "]";
 };
@@ -184,8 +184,7 @@ Freja.Model.prototype.updateFrom = function(view) {
 }
 /**
   * Writes the model back to the remote service
-  * @async
-  * @returns Deferred
+  * @returns MochiKit.Async.Deferred
   */
 Freja.Model.prototype.update = function() {
 	var url = this.url;
@@ -213,8 +212,7 @@ Freja.Model.prototype.update = function() {
   * Deletes the model from the remote service
   * @todo This doesn't work on Opera since it doesn't support HTTP-DELETE method.
   *       We have to make workaround of sorts ...
-  * @async
-  * @returns Deferred
+  * @returns MochiKit.Async.Deferred
   */
 Freja.Model.prototype._delete = function() {
 	var url = this.url;
@@ -230,6 +228,9 @@ Freja.Model.prototype._delete = function() {
 	}
 	return MochiKit.Async.sendXMLHttpRequest(req);
 }
+/**
+  * @returns MochiKit.Async.Deferred
+  */
 Freja.Model.prototype.reload = function() {
 	this.ready = false;
 	var onload = bind(function(document) {
@@ -237,7 +238,7 @@ Freja.Model.prototype.reload = function() {
 		this.ready = true;
 		MochiKit.Signal.signal(this, "onload");
 	}, this);
-	Freja.AssetManager.loadAsset(this.url, onload, Freja.AssetManager.onerror);
+	return Freja.AssetManager.loadAsset(this.url, onload, Freja.AssetManager.onerror);
 }
 
 /**
@@ -300,7 +301,7 @@ Freja.View = function(url, renderer) {
 	connect(this, "onrendercomplete", bind(this.connectBehaviour, this));
 }
 /**
-  * @async
+  * @returns MochiKit.Async.Deferred
   */
 Freja.View.prototype.render = function(model) {
 	try {
@@ -317,11 +318,13 @@ Freja.View.prototype.render = function(model) {
 		if (!model) {
 			model = { document : (new DOMParser()).parseFromString("<?xml version='1.0' ?><dummy/>", "text/xml")};
 		}
-		// @todo this should be considered async
-		var oncomplete = bind(function() {
+		var d = this.renderer.transform(model, this);
+		d.addCallback(bind(function(html) {
+			this.destination.innerHTML = html;
+		}, this));
+		d.addCallback(bind(function() {
 			MochiKit.Signal.signal(this, "onrendercomplete", this.destination)
-		}, this);
-		this.renderer.transform(model, this, this.destination, oncomplete);
+		}, this));
 	} catch (ex) {
 		alert(ex.message);
 	}
@@ -388,23 +391,24 @@ Freja.View.Renderer = function() {}
 Freja.View.Renderer.XSLTransformer = function() {}
 Freja.Class.extend(Freja.View.Renderer.XSLTransformer, Freja.View.Renderer);
 /**
-  * @async
+  * @returns MochiKit.Async.Deferred
   */
-Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, destination, oncomplete) {
+Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view) {
+        var d = new MochiKit.Async.Deferred();
 	var processor = new XSLTProcessor();
 	processor.importStylesheet(view.document);
 	var result = processor.transformToDocument(model.document);
 	var html = Sarissa.serialize(result);
 	if (!html) {
-		throw new Error("XSL Transformation error.");
+		d.errback(new Error("XSL Transformation error."));
 	} else {
 		// fix empty textareas
 		// Can't this be fixed by outputting as html rather than xml ?
 		// <xsl:output method="html" />
 		html = html.replace(/<textarea([^\/>]*)\/>/gi,"<textarea $1></textarea>");
 	}
-	destination.innerHTML = html;
-	oncomplete();
+	d.callback(html);
+	return d;
 }
 /**
   * XSLT on a remote service for browser which have no native support.
@@ -415,9 +419,11 @@ Freja.View.Renderer.RemoteXSLTransformer = function(url) {
 }
 Freja.Class.extend(Freja.View.Renderer.RemoteXSLTransformer, Freja.View.Renderer);
 /**
-  * @async
+  * @returns MochiKit.Async.Deferred
   */
-Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, view, destination, oncomplete) {
+Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, view) {
+        var d = new MochiKit.Async.Deferred();
+
 	// prepare posted data  (no need to send the XSL document, just its url)
 	var xslUrl = view.url;
 	var postedData = "xslFile=" + encodeURIComponent(xslUrl) + "&xmlData=" + encodeURIComponent(Sarissa.serialize(model.document));
@@ -428,18 +434,17 @@ Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, v
 	req.onreadystatechange = function() {
 		if (req.readyState == 4) {
 			if (req.status == 200) {
-				destination.innerHTML = req.responseText;
-				if (oncomplete) {
-					oncomplete();
-				}
+				d.callback(req.responseText);
 			} else {
-				destination.innerHTML = req.responseText;
+				d.errback(req.responseText);
 			}
 		}
 	}
 	req.open("POST", Freja.AssetManager.XSLT_SERVICE_URL, true);
 	req.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
 	req.send(postedData);
+
+	return d;
 }
 /**
   * main repository
@@ -531,6 +536,13 @@ Freja.AssetManager.getView = function(url) {
 	this.views.push(v);
 	return v;
 }
+/**
+  * @todo Use the Deferred to assign onlaod + onerror
+  *       Possibly the XMLHttpRequest-Deferred shouldn't be returned directly,
+  *       but rather a new Deferred should be constructed to trigger when
+  *       callback() have completed ...
+  * @returns MochiKit.Async.Deferred
+  */
 Freja.AssetManager.loadAsset = function(url, onload, onerror) {
 	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
 	if (match) {
@@ -555,36 +567,9 @@ Freja.AssetManager.loadAsset = function(url, onload, onerror) {
 	}
 	try {
 		var req = new XMLHttpRequest();
-		if (this.HTTP_REQUEST_TYPE == "sync") {
-			req.open("GET", url, false);
-//			MochiKit.Async.sendXMLHttpRequest(req).addCallbacks(callback, onerror);
-
-			req.send(null);
-			callback(req);
-
-		} else {
-			req.open("GET", url);
-//			MochiKit.Async.sendXMLHttpRequest(req).addCallbacks(callback, onerror);
-
-			req.onreadystatechange = function() {
-				if (req.readyState == 4) {
-					try {
-						status = req.status;
-						if (!status && MochiKit.Base.isNotEmpty(req.responseText)) {
-							// 0 or undefined seems to mean cached or local
-							status = 304;
-						}
-					} catch (ex) {}
-					if (status == 200 || status == 304) { // OK
-						callback(req);
-					} else {
-						onerror(new Error("HTTP Request failed: " + status));
-					}
-				}
-			}
-			req.send(null);
-
-		}
+		req.open("GET", url, this.HTTP_REQUEST_TYPE == "async");
+		var d = MochiKit.Async.sendXMLHttpRequest(req).addCallbacks(callback, onerror);
+		return d;
 	} catch (ex) {
 		if (onerror) {
 			onerror(ex);
