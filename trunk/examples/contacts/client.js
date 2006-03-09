@@ -55,7 +55,7 @@ edit.handlers["form"] = {
 		try {
 			var model = contacts.get(node.getAttribute('pkey'));
 			model.updateFrom(getView("views/edit.xsl"));
-			var d = model.update();
+			var d = model.save();
 			d.addCallback(function() {
 				contacts.select().reload();
 				index.render(contacts.select());

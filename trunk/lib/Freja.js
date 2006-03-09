@@ -186,7 +186,7 @@ Freja.Model.prototype.updateFrom = function(view) {
   * Writes the model back to the remote service
   * @returns MochiKit.Async.Deferred
   */
-Freja.Model.prototype.update = function() {
+Freja.Model.prototype.save = function() {
 	var url = this.url;
 	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
 	if (match) {
@@ -301,11 +301,17 @@ Freja.View = function(url, renderer) {
 	connect(this, "onrendercomplete", bind(this.connectBehaviour, this));
 }
 /**
+  * @param    model            Freja.Model
+  * @param    placeholder      string    If supplied, this will be used instead of the
+  *                                      default placeholder.
   * @returns MochiKit.Async.Deferred
   */
-Freja.View.prototype.render = function(model) {
+Freja.View.prototype.render = function(model, placeholder /* optional */ ) {
 	try {
-		this.destination = $(this.placeholder);
+		var id = (typeof(placeholder) == "undefined") ? this.placeholder : placeholder;
+		this.destination = $(id);
+		// @todo    Is this a good idea ?
+		// Perhaps we should leave it to the programmer to do this.
 		this.destination.innerHTML = Freja.AssetManager.THROBBER_HTML;
 		if (!this.ready) {
 			connect(this, "onload", bind(this.render, this, model));
