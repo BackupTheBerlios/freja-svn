@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<collection>
+	<item id="1">
+		<name>Black Bean and Smoked Tomato</name>
+		<description>with Goat Cheese, a touch of Cumin and Cayenne</description>
+		<price>$3.80</price>
+	</item>
+	<item id="2">
+		<name>Four Star Ham Salad</name>
+		<description>Line plates with lettuce leaves. Add salad and garnish with orange sections.</description>
+		<price>$2.45</price>
+	</item>
+</collection>

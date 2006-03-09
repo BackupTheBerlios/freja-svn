@@ -1,0 +1,17 @@
+array (
+  'code' => 1024,
+  'message' => 'junk after document element',
+  'file' => 'C:\\wamp\\www\\freja\\wotan\\examples\\contacts\\models\\php_inc\\stdinc.php',
+  'line' => 14,
+)
+array (
+  'code' => 1024,
+  'message' => 'junk after document element
+<email><![CDATA[a@b.c]]></email>
+<first_name>a</first_name>
+<surname>bebse</surname>
+<pkey><![CDATA[{\'email\':\'a@b.c\'}]]></pkey>
+',
+  'file' => 'C:\\wamp\\www\\freja\\wotan\\examples\\contacts\\models\\php_inc\\stdinc.php',
+  'line' => 14,
+)
