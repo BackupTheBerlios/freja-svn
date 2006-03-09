@@ -1,11 +1,20 @@
 <?php
-if ($_SERVER['REQUEST_METHOD'] == "PUT" || $_SERVER['REQUEST_METHOD'] == "POST") {
+$request_headers = apache_request_headers();
+if (isset($request_headers['Http-Method-Equivalent'])) {
+	$REQUEST_METHOD = $request_headers['Http-Method-Equivalent'];
+} else {
+	$REQUEST_METHOD = $_SERVER['REQUEST_METHOD'];
+}
+
+if ($REQUEST_METHOD == "PUT" || $REQUEST_METHOD == "POST") {
 	$RAW = file_get_contents('php://input');
 	$parser = new XML_Unserializer();
 	$PAYLOAD = $parser->unserialize($RAW);
 }
 
-switch ($_SERVER['REQUEST_METHOD']) {
+//error_log($REQUEST_METHOD."\n", 3, dirname(__FILE__)."/access.log");
+
+switch ($REQUEST_METHOD) {
 	case 'GET':
 		$row = $model->fetchByPK(@$_GET[$model->pkey]);
 		if (is_null($row)) {
@@ -58,7 +67,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
 		echo xml_serialize('result', Array('status' => "ok"));
 	exit;
 	default:
-			trigger_error("Unrecognized request-method: " . $_SERVER['REQUEST_METHOD']);
+			trigger_error("Unrecognized request-method: " . $REQUEST_METHOD);
 	exit;
 }
 ?>

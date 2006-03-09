@@ -193,11 +193,7 @@ Freja.Model.prototype.save = function() {
 		url = match[1] + url; // local
 	}
 	var req = new XMLHttpRequest();
-	if (Freja.AssetManager.HTTP_REQUEST_TYPE == "sync") {
-		req.open("POST", url, false);
-	} else {
-		req.open("POST", url);
-	}
+	req.open("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
 	try {
 		// for some obscure reason exceptions aren't thrown back if I call the
 		// shorthand version of sendXMLHttpRequest in IE6.
@@ -221,10 +217,12 @@ Freja.Model.prototype._delete = function() {
 		url = match[1] + url; // local
 	}
 	var req = new XMLHttpRequest();
-	if (Freja.AssetManager.HTTP_REQUEST_TYPE == "sync") {
-		req.open("DELETE", url, false);
+	if (Freja.AssetManager.HTTP_METHOD_TUNNEL) {
+		req.open("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
+		req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, "DELETE");
+		req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	} else {
-		req.open("DELETE", url);
+		req.open("DELETE", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
 	}
 	return MochiKit.Async.sendXMLHttpRequest(req);
 }
@@ -272,10 +270,12 @@ Freja.Model.DataSource.prototype.create = function(values) {
 		url = match[1] + url; // local
 	}
 	var req = new XMLHttpRequest();
-	if (Freja.AssetManager.HTTP_REQUEST_TYPE == "sync") {
-		req.open("PUT", url, false);
+	if (Freja.AssetManager.HTTP_METHOD_TUNNEL) {
+		req.open("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
+		req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, "PUT");
+		req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	} else {
-		req.open("PUT", url);
+		req.open("PUT", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
 	}
 
 	var payload = {};
@@ -304,7 +304,6 @@ Freja.View = function(url, renderer) {
   * @param    model            Freja.Model
   * @param    placeholder      string    If supplied, this will be used instead of the
   *                                      default placeholder.
-  * @returns MochiKit.Async.Deferred
   */
 Freja.View.prototype.render = function(model, placeholder /* optional */ ) {
 	try {
@@ -447,7 +446,7 @@ Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, v
 		}
 	}
 	req.open("POST", Freja.AssetManager.XSLT_SERVICE_URL, true);
-	req.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
+	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	req.send(postedData);
 
 	return d;
@@ -465,6 +464,11 @@ Freja.AssetManager = {
   * "async" | "sync"
   */
 Freja.AssetManager.HTTP_REQUEST_TYPE = "async";
+/**
+  * Experimental
+  */
+// Freja.AssetManager.HTTP_METHOD_TUNNEL = null;
+Freja.AssetManager.HTTP_METHOD_TUNNEL = "Http-Method-Equivalent";
 /**
   * url of the service to do the work.
   */
@@ -573,7 +577,14 @@ Freja.AssetManager.loadAsset = function(url, onload, onerror) {
 	}
 	try {
 		var req = new XMLHttpRequest();
-		req.open("GET", url, this.HTTP_REQUEST_TYPE == "async");
+		if (Freja.AssetManager.HTTP_METHOD_TUNNEL) {
+			req.open("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
+			req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, "GET");
+			req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+		} else {
+			req.open("GET", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
+		}
+//		req.open("GET", url, this.HTTP_REQUEST_TYPE == "async");
 		var d = MochiKit.Async.sendXMLHttpRequest(req).addCallbacks(callback, onerror);
 		return d;
 	} catch (ex) {
@@ -584,7 +595,8 @@ Freja.AssetManager.loadAsset = function(url, onload, onerror) {
 	}
 }
 Freja.AssetManager.onerror = function(ex) {
-	alert(ex.message);
+	throw ex;
+	alert("Freja.AssetManager.onerror\n" + ex.message);
 }
 /**
   * Global exports
