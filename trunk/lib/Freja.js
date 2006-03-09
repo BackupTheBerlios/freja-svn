@@ -236,7 +236,7 @@ Freja.Model.prototype.reload = function() {
 		this.ready = true;
 		MochiKit.Signal.signal(this, "onload");
 	}, this);
-	return Freja.AssetManager.loadAsset(this.url, onload, Freja.AssetManager.onerror);
+	return Freja.AssetManager.loadAsset(this.url, true, onload, Freja.AssetManager.onerror);
 }
 
 /**
@@ -522,7 +522,7 @@ Freja.AssetManager.getModel = function(url) {
 		this.ready = true;
 		MochiKit.Signal.signal(this, "onload");
 	}, m);
-	this.loadAsset(url, onload, Freja.AssetManager.onerror);
+	this.loadAsset(url, true, onload, Freja.AssetManager.onerror);
 	this.models.push(m);
 	return m;
 }
@@ -542,7 +542,7 @@ Freja.AssetManager.getView = function(url) {
 		this.ready = true;
 		MochiKit.Signal.signal(this, "onload");
 	}, v);
-	this.loadAsset(url, onload, Freja.AssetManager.onerror);
+	this.loadAsset(url, false, onload, Freja.AssetManager.onerror);
 	this.views.push(v);
 	return v;
 }
@@ -553,7 +553,7 @@ Freja.AssetManager.getView = function(url) {
   *       callback() have completed ...
   * @returns MochiKit.Async.Deferred
   */
-Freja.AssetManager.loadAsset = function(url, onload, onerror) {
+Freja.AssetManager.loadAsset = function(url, preventCaching, onload, onerror) {
 	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
 	if (match) {
 		url = match[1] + url; // local
@@ -577,7 +577,7 @@ Freja.AssetManager.loadAsset = function(url, onload, onerror) {
 	}
 	try {
 		var req = new XMLHttpRequest();
-		if (Freja.AssetManager.HTTP_METHOD_TUNNEL) {
+		if (preventCaching && Freja.AssetManager.HTTP_METHOD_TUNNEL) {
 			req.open("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
 			req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, "GET");
 			req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -595,7 +595,6 @@ Freja.AssetManager.loadAsset = function(url, onload, onerror) {
 	}
 }
 Freja.AssetManager.onerror = function(ex) {
-	throw ex;
 	alert("Freja.AssetManager.onerror\n" + ex.message);
 }
 /**
