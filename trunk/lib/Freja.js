@@ -65,6 +65,43 @@ Freja.Class.extend = function(subClass, superClass) {
 	subClass.prototype.superClass = superClass;
 }
 /**
+  * This code was written by Tyler Akins and has been placed in the
+  * public domain.  It would be nice if you left this header intact.
+  * Base64 code from Tyler Akins -- http://rumkin.com
+  */
+Freja.Base64 = {};
+Freja.Base64.keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+Freja.Base64.encode = function(input) {
+	var output = "";
+	var chr1, chr2, chr3;
+	var enc1, enc2, enc3, enc4;
+	var i = 0;
+	var keyStr = this.keyStr;
+
+	do {
+		chr1 = input.charCodeAt(i++);
+		chr2 = input.charCodeAt(i++);
+		chr3 = input.charCodeAt(i++);
+
+		enc1 = chr1 >> 2;
+		enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+		enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+		enc4 = chr3 & 63;
+
+		if (isNaN(chr2)) {
+			enc3 = enc4 = 64;
+		} else if (isNaN(chr3)) {
+			enc4 = 64;
+		}
+
+		output = output + keyStr.charAt(enc1) + keyStr.charAt(enc2) +
+		keyStr.charAt(enc3) + keyStr.charAt(enc4);
+	} while (i < input.length);
+
+	return output;
+}
+
+/**
   * The baseclass for queryengines
   * @abstract
   */
@@ -206,6 +243,10 @@ Freja.Model.prototype.save = function() {
 
 	var req = new XMLHttpRequest();
 	req.open("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
+	if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
+		var auth = "Basic " + Freja.Base64.encode(Freja.AssetManager.USERNAME + ":" + Freja.AssetManager.PASSWORD);
+		req.setRequestHeader("Authorization", auth);
+	}
 	try {
 		// for some obscure reason exceptions aren't thrown back if I call the
 		// shorthand version of sendXMLHttpRequest in IE6.
@@ -232,6 +273,10 @@ Freja.Model.prototype._delete = function() {
 		req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	} else {
 		req.open("DELETE", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
+	}
+	if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
+		var auth = "Basic " + Freja.Base64.encode(Freja.AssetManager.USERNAME + ":" + Freja.AssetManager.PASSWORD);
+		req.setRequestHeader("Authorization", auth);
 	}
 	return MochiKit.Async.sendXMLHttpRequest(req);
 }
@@ -292,6 +337,10 @@ Freja.Model.DataSource.prototype.create = function(values) {
 		req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	} else {
 		req.open("PUT", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
+	}
+	if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
+		var auth = "Basic " + Freja.Base64.encode(Freja.AssetManager.USERNAME + ":" + Freja.AssetManager.PASSWORD);
+		req.setRequestHeader("Authorization", auth);
 	}
 
 	var payload = {};
@@ -464,6 +513,10 @@ Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, v
 	}
 	req.open("POST", Freja.AssetManager.XSLT_SERVICE_URL, true);
 	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+	if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
+		var auth = "Basic " + Freja.Base64.encode(Freja.AssetManager.USERNAME + ":" + Freja.AssetManager.PASSWORD);
+		req.setRequestHeader("Authorization", auth);
+	}
 	req.send(postedData);
 
 	return d;
@@ -478,22 +531,32 @@ Freja.AssetManager = {
 	undoHistory : []	// this isn't used atm
 }
 /**
+  * Set to sync to make all requests synchroneous. You shouldn't use
+  * this setting for anything but testing/debugging.
   * "async" | "sync"
   */
 Freja.AssetManager.HTTP_REQUEST_TYPE = "async";
 /**
-  * Experimental
+  * If this is set to NULL, real PUT and DELETE http-requests will be made,
+  * otherwise a header will be set instead, and the request tunneled through
+  * POST. For compatibility, you should use tunneling.
   */
 // Freja.AssetManager.HTTP_METHOD_TUNNEL = null;
 Freja.AssetManager.HTTP_METHOD_TUNNEL = "Http-Method-Equivalent";
 /**
-  * url of the service to do the work.
+  * Set this url to provide remote xslt-transformation for browsers that
+  * doesn't support it natively.
   */
 Freja.AssetManager.XSLT_SERVICE_URL = "srvc-xslt.php";
 /**
   * HTML displayed while waiting for stuff to happen
   */
 Freja.AssetManager.THROBBER_HTML = "<span style='color:white;background:firebrick'>Loading ...</span>";
+/**
+  * Set USERNAME + PASSWORD to authenticate with basic HTTP-Authorization.
+  */
+Freja.AssetManager.USERNAME = null;
+Freja.AssetManager.PASSWORD = null;
 /**
   * returns an instance of the queryengine to use
   */
@@ -597,6 +660,10 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 			req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 		} else {
 			req.open("GET", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
+		}
+		if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
+			var auth = "Basic " + Freja.Base64.encode(Freja.AssetManager.USERNAME + ":" + Freja.AssetManager.PASSWORD);
+			req.setRequestHeader("Authorization", auth);
 		}
 //		req.open("GET", url, this.HTTP_REQUEST_TYPE == "async");
 		var comm = MochiKit.Async.sendXMLHttpRequest(req).addCallbacks(handler, bind(d.errback, d));
