@@ -1,4 +1,12 @@
 /**
+  * Freja - a javascript Model-View-Controller Framework geared toward Zero-Latency Web Applications
+  *
+  * Copyright (c) 2006 Cédric Savarese <pro@4213miles.com>, Troels Knak-Nielsen <troelskn@gmail.com>
+  * This software is licensed under the CC-GNU LGPL <http://creativecommons.org/licenses/LGPL/2.1/>
+  *
+  * Documentation : http://www.csscripting.com/freja/
+  */
+/**
   * Package : begin
   */
 if (typeof(dojo) != "undefined") {
@@ -192,22 +200,23 @@ Freja.Model.prototype.save = function() {
 	if (match) {
 		url = match[1] + url; // local
 	}
+	// since the serialization may fail, we create a deferred for the
+	// purpose, rather than just returning the sendXMLHttpRequest directly.
+	var d = new MochiKit.Async.Deferred();
+
 	var req = new XMLHttpRequest();
 	req.open("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
 	try {
 		// for some obscure reason exceptions aren't thrown back if I call the
 		// shorthand version of sendXMLHttpRequest in IE6.
-		return MochiKit.Async.sendXMLHttpRequest(req, Sarissa.serialize(this.document));
+		MochiKit.Async.sendXMLHttpRequest(req, Sarissa.serialize(this.document)).addCallbacks(bind(d.callback, d), bind(d.errback, d));
 	} catch (ex) {
-		var e  = new Error("Can't complete request for : " + url);
-		e.innerException = ex;
-		throw e;
+		d.errback(ex);
 	}
+	return d;
 }
 /**
   * Deletes the model from the remote service
-  * @todo This doesn't work on Opera since it doesn't support HTTP-DELETE method.
-  *       We have to make workaround of sorts ...
   * @returns MochiKit.Async.Deferred
   */
 Freja.Model.prototype._delete = function() {
@@ -236,20 +245,27 @@ Freja.Model.prototype.reload = function() {
 		this.ready = true;
 		MochiKit.Signal.signal(this, "onload");
 	}, this);
-	return Freja.AssetManager.loadAsset(this.url, true, onload, Freja.AssetManager.onerror);
+	var d = Freja.AssetManager.loadAsset(this.url, true);
+	d.addCallbacks(onload, Freja.AssetManager.onerror);
+	return d;
 }
 
 /**
-  * Experimental
+  * DataSource provides a gateway-type interface to a model service.
   */
 Freja.Model.DataSource = function(baseURL, selectURL) {
 	this.baseURL = baseURL;
 	this.selectURL = selectURL;
 }
-
+/**
+  * Returns a list of primary-keys to records in the datasource
+  */
 Freja.Model.DataSource.prototype.select = function() {
 	return getModel(this.selectURL);
 };
+/**
+  * Returns a single record from a primary-key
+  */
 Freja.Model.DataSource.prototype.get = function(pkey) {
 	try {
 		var args = eval("(" + pkey + ")");
@@ -260,8 +276,8 @@ Freja.Model.DataSource.prototype.get = function(pkey) {
 	return getModel(url);
 };
 /**
-  * @todo This doesn't work on Opera since it doesn't support HTTP-PUT method.
-  *       We have to make workaround of sorts ...
+  * Creates a new instance of a record
+  * @todo errback to the deferred on errors
   */
 Freja.Model.DataSource.prototype.create = function(values) {
 	var url = this.baseURL;
@@ -304,6 +320,7 @@ Freja.View = function(url, renderer) {
   * @param    model            Freja.Model
   * @param    placeholder      string    If supplied, this will be used instead of the
   *                                      default placeholder.
+  * @todo  Return a deferred
   */
 Freja.View.prototype.render = function(model, placeholder /* optional */ ) {
 	try {
@@ -522,7 +539,7 @@ Freja.AssetManager.getModel = function(url) {
 		this.ready = true;
 		MochiKit.Signal.signal(this, "onload");
 	}, m);
-	this.loadAsset(url, true, onload, Freja.AssetManager.onerror);
+	this.loadAsset(url, true).addCallbacks(onload, Freja.AssetManager.onerror);
 	this.models.push(m);
 	return m;
 }
@@ -542,25 +559,25 @@ Freja.AssetManager.getView = function(url) {
 		this.ready = true;
 		MochiKit.Signal.signal(this, "onload");
 	}, v);
-	this.loadAsset(url, false, onload, Freja.AssetManager.onerror);
+	this.loadAsset(url, false).addCallbacks(onload, Freja.AssetManager.onerror);
 	this.views.push(v);
 	return v;
 }
 /**
-  * @todo Use the Deferred to assign onlaod + onerror
-  *       Possibly the XMLHttpRequest-Deferred shouldn't be returned directly,
-  *       but rather a new Deferred should be constructed to trigger when
-  *       callback() have completed ...
   * @returns MochiKit.Async.Deferred
   */
-Freja.AssetManager.loadAsset = function(url, preventCaching, onload, onerror) {
+Freja.AssetManager.loadAsset = function(url, preventCaching) {
 	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
 	if (match) {
 		url = match[1] + url; // local
 	}
-	var callback = function(transport) {
+	var d = new MochiKit.Async.Deferred();
+	var handler = function(transport) {
 		try {
-			if (transport.responseText != "" && transport.responseXML.xml == "") {
+			if (transport.responseText == "") {
+				throw new Error("Empty response.");
+			}
+			if (transport.responseXML.xml == "") {
 				// The server doesn't reply with Content-Type: text/xml
 				// this will happen if the file is loaded locally (through file://)
 				var document = (new DOMParser()).parseFromString(transport.responseText, "text/xml");
@@ -568,12 +585,9 @@ Freja.AssetManager.loadAsset = function(url, preventCaching, onload, onerror) {
 				var document = transport.responseXML;
 			}
 		} catch (ex) {
-			if (onerror) {
-				onerror(ex);
-			}
-			throw ex;
+			d.errback(ex);
 		}
-		onload(document);
+		d.callback(document);
 	}
 	try {
 		var req = new XMLHttpRequest();
@@ -585,14 +599,11 @@ Freja.AssetManager.loadAsset = function(url, preventCaching, onload, onerror) {
 			req.open("GET", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
 		}
 //		req.open("GET", url, this.HTTP_REQUEST_TYPE == "async");
-		var d = MochiKit.Async.sendXMLHttpRequest(req).addCallbacks(callback, onerror);
-		return d;
+		var comm = MochiKit.Async.sendXMLHttpRequest(req).addCallbacks(handler, bind(d.errback, d));
 	} catch (ex) {
-		if (onerror) {
-			onerror(ex);
-		}
-		throw ex;
+		d.errback(ex);
 	}
+	return d;
 }
 Freja.AssetManager.onerror = function(ex) {
 	alert("Freja.AssetManager.onerror\n" + ex.message);
