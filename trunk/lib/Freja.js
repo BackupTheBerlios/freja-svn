@@ -432,7 +432,11 @@ Freja.View.prototype.connectBehaviour = function(destination) {
 						var handler = handlers[id];
 						if (handler) {
 							for (var eventType in handler) {
-								connectCallback(child, eventType, handler[eventType]);
+								if (eventType == "init") {
+									handler.init(child);
+								} else {
+									connectCallback(child, eventType, handler[eventType]);
+								}
 							}
 						}
 					}
