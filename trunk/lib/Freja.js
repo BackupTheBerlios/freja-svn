@@ -296,36 +296,24 @@ Freja.Model.prototype.reload = function() {
 }
 
 /**
-  * DataSource provides a gateway-type interface to a model service.
+  * DataSource provides a gateway-type interface to a REST service.
   */
-Freja.Model.DataSource = function(baseURL, selectURL) {
-	this.baseURL = baseURL;
-	this.selectURL = selectURL;
+Freja.Model.DataSource = function(createURL, indexURL) {
+	this.createURL = createURL;
+	this.indexURL = indexURL;
 }
 /**
   * Returns a list of primary-keys to records in the datasource
   */
 Freja.Model.DataSource.prototype.select = function() {
-	return getModel(this.selectURL);
-};
-/**
-  * Returns a single record from a primary-key
-  */
-Freja.Model.DataSource.prototype.get = function(pkey) {
-	try {
-		var args = eval("(" + pkey + ")");
-	} catch (ex) {
-		throw new Error("JSON can't be eval'ed:\n" + pkey);
-	}
-	var url = this.baseURL + "?" + queryString(args);
-	return getModel(url);
+	return getModel(this.indexURL);
 };
 /**
   * Creates a new instance of a record
   * @todo errback to the deferred on errors
   */
 Freja.Model.DataSource.prototype.create = function(values) {
-	var url = this.baseURL;
+	var url = this.createURL;
 	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
 	if (match) {
 		url = match[1] + url; // local
@@ -416,28 +404,6 @@ Freja.View.prototype.render = function(model, placeholder /* optional */ ) {
 
 		var h = new Handler(model, this, d);
 		h.trigger();
-/*
-		if (!this.ready) {
-			connect(this, "onload", bind(this.render, this, model));
-			return;
-		}
-		if (model && !model.ready) {
-			connect(model, "onload", bind(this.render, this, model));
-			return;
-		}
-		if (!model) {
-			model = { document : (new DOMParser()).parseFromString("<?xml version='1.0' ?><dummy/>", "text/xml")};
-		}
-		var trans = this.renderer.transform(model, this);
-		trans.addCallback(bind(function(html) {
-			this.destination.innerHTML = html;
-		}, this));
-		trans.addCallback(bind(function() {
-			MochiKit.Signal.signal(this, "onrendercomplete", this.destination)
-		}, this));
-		trans.addCallback(d.callback);
-		trans.addErrback(d.errback);
-*/
 	} catch (ex) {
 		d.errback(ex);
 	}

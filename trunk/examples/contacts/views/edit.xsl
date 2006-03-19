@@ -3,7 +3,7 @@
 
 <xsl:template match="record">	
 	<form method="post" action="#" handler="form">
-	<xsl:attribute name="pkey"><xsl:value-of select="pkey" /></xsl:attribute>
+	<xsl:attribute name="url"><xsl:value-of select="url" /></xsl:attribute>
 		<p><xsl:value-of select="email" /></p>
 		<p><input name="record/first_name" type="text" value="{first_name}" /></p>
 		<p><input name="record/surname" type="text" value="{surname}" /></p>

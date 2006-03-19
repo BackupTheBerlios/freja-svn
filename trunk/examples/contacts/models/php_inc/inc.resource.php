@@ -23,7 +23,7 @@ switch ($REQUEST_METHOD) {
 		}
 		header("Content-Type:text/xml");
 		echo "<?xml version='1.0' ?".">";
-		$row['pkey'] = json_serialize(Array($model->pkey => $row[$model->pkey]));
+		$row['url'] = url($_SERVER['PHP_SELF'], Array($model->pkey => $row[$model->pkey]));
 		echo xml_serialize('record', $row);
 	exit;
 	case 'PUT':

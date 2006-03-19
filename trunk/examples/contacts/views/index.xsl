@@ -8,10 +8,10 @@
 		<td><xsl:value-of select="email" /></td>
 		<td>
 			<input type="button" value="edit" handler="edit">
-				<xsl:attribute name="pkey"><xsl:value-of select="pkey" /></xsl:attribute>
+				<xsl:attribute name="url"><xsl:value-of select="url" /></xsl:attribute>
 			</input>
 			<input type="button" value="delete" handler="delete">
-				<xsl:attribute name="pkey"><xsl:value-of select="pkey" /></xsl:attribute>
+				<xsl:attribute name="url"><xsl:value-of select="url" /></xsl:attribute>
 			</input>
 		</td>
 	</tr>

@@ -236,6 +236,40 @@ function json_serialize($values) {
 	return "{".implode(",", $pairs)."}";
 }
 
+function url($href = NULL, $args = Array()) {
+	if (is_null($href)) {
+		$href = $_SERVER['PHP_SELF'];
+	}
+	$href = ltrim($href, "/");
+	$href = rtrim($href, "?");
+	if (!preg_match("~^http://~", $href)) {
+		if (isset($_SERVER['HTTP_HOST'])) {
+			$href = "http://".$_SERVER['HTTP_HOST']."/".$href;
+		} else {
+			$href = "http://localhost/".$href;
+		}
+	}
+	if (preg_match("/(.*)\\?(.*)/", $href, $matches)) {
+		$href = $matches[1];
+		parse_str($matches[2], $parsed);
+		$args = array_merge($parsed, $args);
+	}
+	$params = Array();
+	foreach ($args as $key => $value) {
+		if (!is_null($value)) {
+			$params[] = rawurlencode($key)."=".rawurlencode($value);
+		}
+	}
+	if (count($params) > 0) {
+		if (strpos($href, "?") === FALSE) {
+			return $href."?".implode("&", $params);
+		} else {
+			return $href."&".implode("&", $params);
+		}
+	}
+	return $href;
+}
+
 function error_handler($errno, $errstr, $errfile, $errline) {
 	if (error_reporting() == 0) {
 		return;
