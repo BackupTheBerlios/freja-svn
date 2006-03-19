@@ -369,15 +369,54 @@ Freja.View = function(url, renderer) {
   * @param    model            Freja.Model
   * @param    placeholder      string    If supplied, this will be used instead of the
   *                                      default placeholder.
-  * @todo  Return a deferred
+  * @returns MochiKit.Async.Deferred
   */
 Freja.View.prototype.render = function(model, placeholder /* optional */ ) {
+
+	var Handler = function(model, view, deferred) {
+		this.model = model;
+		this.view = view;
+		this.deferred = deferred;
+	}
+
+	Handler.prototype.trigger = function() {
+		try {
+			if (!this.view.ready) {
+				connect(this.view, "onload", bind(this.trigger, this));
+				return;
+			}
+			if (this.model && !this.model.ready) {
+				connect(this.model, "onload", bind(this.trigger, this));
+				return;
+			}
+			if (!model) {
+				model = { document : (new DOMParser()).parseFromString("<?xml version='1.0' ?><dummy/>", "text/xml")};
+			}
+			var trans = this.view.renderer.transform(model, this.view);
+			trans.addCallback(bind(function(html) {
+				this.destination.innerHTML = html;
+			}, this.view));
+			trans.addCallback(bind(function() {
+				MochiKit.Signal.signal(this, "onrendercomplete", this.destination)
+			}, this.view));
+			trans.addCallback(this.deferred.callback);
+			trans.addErrback(this.deferred.errback);
+		} catch (ex) {
+			this.deferred.errback(ex);
+		}
+	}
+
+	var d = new MochiKit.Async.Deferred();
 	try {
 		var id = (typeof(placeholder) == "undefined") ? this.placeholder : placeholder;
 		this.destination = $(id);
 		// @todo    Is this a good idea ?
 		// Perhaps we should leave it to the programmer to do this.
 		this.destination.innerHTML = Freja.AssetManager.THROBBER_HTML;
+
+		var h = new Handler(model, this, d);
+		h.trigger();
+/*
 		if (!this.ready) {
 			connect(this, "onload", bind(this.render, this, model));
 			return;
@@ -389,17 +428,22 @@ Freja.View.prototype.render = function(model, placeholder /* optional */ ) {
 		if (!model) {
 			model = { document : (new DOMParser()).parseFromString("<?xml version='1.0' ?><dummy/>", "text/xml")};
 		}
-		var d = this.renderer.transform(model, this);
-		d.addCallback(bind(function(html) {
+		var trans = this.renderer.transform(model, this);
+		trans.addCallback(bind(function(html) {
 			this.destination.innerHTML = html;
 		}, this));
-		d.addCallback(bind(function() {
+		trans.addCallback(bind(function() {
 			MochiKit.Signal.signal(this, "onrendercomplete", this.destination)
 		}, this));
+		trans.addCallback(d.callback);
+		trans.addErrback(d.errback);
+*/
 	} catch (ex) {
-		alert(ex.message);
+		d.errback(ex);
 	}
+	return d;
 }
+
 /**
   * Decorates the output of the primary renderer, to inject behaviour.
   * @note Maybe we could use cssQuery (http://dean.edwards.name/my/cssQuery/)
@@ -470,19 +514,23 @@ Freja.Class.extend(Freja.View.Renderer.XSLTransformer, Freja.View.Renderer);
   */
 Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view) {
         var d = new MochiKit.Async.Deferred();
-	var processor = new XSLTProcessor();
-	processor.importStylesheet(view.document);
-	var result = processor.transformToDocument(model.document);
-	var html = Sarissa.serialize(result);
-	if (!html) {
-		d.errback(new Error("XSL Transformation error."));
-	} else {
-		// fix empty textareas
-		// Can't this be fixed by outputting as html rather than xml ?
-		// <xsl:output method="html" />
-		html = html.replace(/<textarea([^\/>]*)\/>/gi,"<textarea $1></textarea>");
+        try {
+		var processor = new XSLTProcessor();
+		processor.importStylesheet(view.document);
+		var result = processor.transformToDocument(model.document);
+		var html = Sarissa.serialize(result);
+		if (!html) {
+			d.errback(new Error("XSL Transformation error."));
+		} else {
+			// fix empty textareas
+			// Can't this be fixed by outputting as html rather than xml ?
+			// <xsl:output method="html" />
+			html = html.replace(/<textarea([^\/>]*)\/>/gi,"<textarea $1></textarea>");
+			d.callback(html);
+		}
+	} catch (ex) {
+		d.errback(ex);
 	}
-	d.callback(html);
 	return d;
 }
 /**
@@ -515,14 +563,14 @@ Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, v
 			}
 		}
 	}
-	req.open("POST", Freja.AssetManager.XSLT_SERVICE_URL, true);
+	var async = Freja.AssetManager.HTTP_REQUEST_TYPE == "async";
+	req.open("POST", Freja.AssetManager.XSLT_SERVICE_URL, async);
 	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
 		var auth = "Basic " + Freja.Base64.encode(Freja.AssetManager.USERNAME + ":" + Freja.AssetManager.PASSWORD);
 		req.setRequestHeader("Authorization", auth);
 	}
 	req.send(postedData);
-
 	return d;
 }
 /**
@@ -658,19 +706,31 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 	}
 	try {
 		var req = new XMLHttpRequest();
+		var async = Freja.AssetManager.HTTP_REQUEST_TYPE == "async";
 		if (preventCaching && Freja.AssetManager.HTTP_METHOD_TUNNEL) {
-			req.open("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
+			req.open("POST", url, async);
 			req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, "GET");
 			req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 		} else {
-			req.open("GET", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
+			req.open("GET", url, async);
 		}
 		if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
 			var auth = "Basic " + Freja.Base64.encode(Freja.AssetManager.USERNAME + ":" + Freja.AssetManager.PASSWORD);
 			req.setRequestHeader("Authorization", auth);
 		}
-//		req.open("GET", url, this.HTTP_REQUEST_TYPE == "async");
-		var comm = MochiKit.Async.sendXMLHttpRequest(req).addCallbacks(handler, bind(d.errback, d));
+		// This shouldn't be nescesary, but alas it is - firefox chokes
+		// It's probably due to an error in MochiKit, so the problem
+		// should be fixed there.
+		var comm = MochiKit.Async.sendXMLHttpRequest(req);
+		if (async) {
+			comm.addCallbacks(handler, bind(d.errback, d));
+		} else {
+			if (req.status == 200 || req.status == 304) {
+				handler(req);
+			} else {
+				d.errback(new Error("Request failed:" + req.status));
+			}
+		}
 	} catch (ex) {
 		d.errback(ex);
 	}

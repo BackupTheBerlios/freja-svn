@@ -1,5 +1,6 @@
 // model : contacts
 var contacts = new Freja.Model.DataSource("models/contact.php", "models/contacts.php");
+Freja.AssetManager.XSLT_SERVICE_URL = "../../external/srvc-xslt.php?path=examples/contacts/";
 
 // view : index
 var index = getView("views/index.xsl");

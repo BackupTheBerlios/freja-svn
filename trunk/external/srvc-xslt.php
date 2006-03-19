@@ -3,9 +3,14 @@
 		if (error_reporting() == 0) {
 			return;
 		}
+		$filename = "log.txt";
+		if (!is_file($filename)) {
+			@fclose(fopen($filename, "w"));
+		}
+		error_log($errstr."\n", 3, $filename);
 		header("HTTP/1.0 500 Internal Error");
 		header('Content-Type: text/xml');
-		echo $errstr;
+		echo "<?xml version='1.0' ?><error>".$errstr."</error>";
 		exit;
 	}
 	function exception_handler($ex) {
@@ -26,33 +31,37 @@
 	// Documentation : http://www.csscripting.com/freja
 
 
-	if(isset($_POST['xmlData']) && isset($_POST['xslFile'])) {
+	if (isset($_POST['xmlData']) && isset($_POST['xslFile'])) {
 //		if (get_magic_quotes_gpc()) {
 //			array_map('stripslashes', $_POST);
 //		}
-		$xmlData     = stripslashes($_POST['xmlData']);
-		$xslFile     = dirname(__FILE__)."/".stripslashes($_POST['xslFile']);
+		$root = realpath(dirname(__FILE__)."/../");
+		$xmlData = stripslashes($_POST['xmlData']);
+		$path = isset($_GET['path']) ? ("/".stripslashes($_GET['path'])) : "";
+		$xslFile = $root.$path."/".stripslashes($_POST['xslFile']);
 
-		if (!preg_match("/^".preg_quote(realpath(dirname(__FILE__)), "/")."/", realpath($xslFile))) {
-			trigger_error("Illegal filename");
+		if (!preg_match("/^".preg_quote(realpath($root), "/")."/", realpath($xslFile))) {
+			trigger_error("Illegal filename '$xslFile'");
 		}
 		$arrXslParam = array();
 
-		if(isset($_POST['xslParam'])) {
+		if (isset($_POST['xslParam'])) {
 			$xslParam = $_POST['xslParam'];   // encoded as param_name1,value1,param_name2,value2
 			$arrXsl   = split(",",$xslParam);
-			for($i=0;$i<count($arrXsl);$i+=2) {
+			for ($i=0;$i<count($arrXsl);$i+=2) {
 				$arrXslParam[$arrXsl[$i]] = $arrXsl[$i+1];
 			}
 		}
 		$xmlDoc = domxml_open_mem($xmlData, DOMXML_LOAD_DONT_KEEP_BLANKS);
-		if($xmlDoc) {
+		if ($xmlDoc) {
 			$xslDoc = domxml_xslt_stylesheet_file($xslFile);
-			if(!$xslDoc)
+			if (!$xslDoc) {
 				trigger_error("XSL_TRANSFORMATION: Load XSL failed. File path was: $xslFile.\n");
+			}
 			$transformedData = $xslDoc->process($xmlDoc, $arrXslParam);
-			if(!$transformedData)
+			if (!$transformedData) {
 				trigger_error("XSL_TRANSFORMATION: Transformation failed.\n");
+			}
 			$xhtmlOuput = str_replace('<?xml version="1.0"?>','',$xslDoc->result_dump_mem($transformedData));
 
 			header("HTTP/1.0 200 Ok");
@@ -64,7 +73,6 @@
 		}
 	}
 	else {
-		trigger_error ("XSL_TRANSFORMATION: Bad Request.");
-		trigger_error("Bad Request.");
+		trigger_error("XSL_TRANSFORMATION: Bad Request.");
 	}
 ?>

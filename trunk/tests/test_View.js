@@ -4,6 +4,8 @@ if (typeof(tests) == 'undefined') { tests = {}; }
 
 tests.test_View = function (t) {
 	Freja.AssetManager.HTTP_REQUEST_TYPE = "sync";
+	Freja.AssetManager.XSLT_SERVICE_URL = "../external/srvc-xslt.php";
+	Freja.AssetManager.XSLT_SERVICE_URL = "../external/srvc-xslt.php?path=tests/";
 	var view = Freja.AssetManager.getView("data/view.xsl");
 	t.ok(view instanceof Freja.View);
 	t.is(view.ready, true, "state should be ready (loaded)");
@@ -13,9 +15,9 @@ tests.test_View = function (t) {
 	var out = document.createElement("DIV");
 	view.placeholder = out;
 	view.render(model);
-	t.ok(out.firstChild.nodeName.toLowerCase() == "div");
-	t.ok(out.firstChild.firstChild.nodeName.toLowerCase() == "h3");
-	t.is(out.firstChild.firstChild.firstChild.nodeValue, model.get("item/name"), "Rendered view should contain the models value");
+
+	t.is(out.getElementsByTagName("H3").length, 1);
+	t.is(out.getElementsByTagName("H3").item(0).firstChild.nodeValue, model.get("item/name"), "Rendered view should contain the models value");
 
 	// test of form
 	var formView = Freja.AssetManager.getView("data/form-view.xsl");
