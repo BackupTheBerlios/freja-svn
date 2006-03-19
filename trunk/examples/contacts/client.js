@@ -7,7 +7,6 @@ var index = getView("views/index.xsl");
 index.placeholder = "content";
 index.handlers["edit"] = {
 	onclick : function(node) {
-//		edit.render(contacts.get(node.getAttribute('pkey')));
 		edit.render(getModel(node.getAttribute('url')));
 	}
 };
@@ -16,12 +15,12 @@ index.handlers["delete"] = {
 		if (!confirm("Really delete it?")) {
 			return;
 		}
-//		var model = contacts.get(node.getAttribute('pkey'));
 		var model = getModel(node.getAttribute('url'));
-		var d = model._delete()
+		var d = model.remove()
 		d.addCallback(function() {
-			contacts.select().reload();
-			index.render(contacts.select());
+			contacts.select().reload().addCallback(function() {
+				index.render(contacts.select());
+			});
 		});
 	}
 };
@@ -38,8 +37,9 @@ create.handlers["form"] = {
 	onsubmit : function(node) {
 		var d = contacts.create(getView("views/create.xsl").getValues());
 		d.addCallback(function() {
-			contacts.select().reload();
-			index.render(contacts.select());
+			contacts.select().reload().addCallback(function() {
+				index.render(contacts.select());
+			});
 		});
 		index.render(contacts.select());
 	}
@@ -56,13 +56,13 @@ edit.placeholder = "content";
 edit.handlers["form"] = {
 	onsubmit : function(node) {
 		try {
-//			var model = contacts.get(node.getAttribute('pkey'));
 			var model = getModel(node.getAttribute('url'));
 			model.updateFrom(getView("views/edit.xsl"));
 			var d = model.save();
 			d.addCallback(function() {
-				contacts.select().reload();
-				index.render(contacts.select());
+				contacts.select().reload().addCallback(function() {
+					index.render(contacts.select());
+				});
 			});
 			index.render(contacts.select());
 		} catch (ex) {

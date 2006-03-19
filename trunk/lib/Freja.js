@@ -260,7 +260,7 @@ Freja.Model.prototype.save = function() {
   * Deletes the model from the remote service
   * @returns MochiKit.Async.Deferred
   */
-Freja.Model.prototype._delete = function() {
+Freja.Model.prototype.remove = function() {
 	var url = this.url;
 	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
 	if (match) {
