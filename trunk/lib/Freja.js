@@ -55,14 +55,20 @@ Freja.toString = function () {
 /**
   * Single-hierarchy inheritance (class emulation)
   * @see    http://www.itsalleasy.com/2006/02/05/prototype-chain/
+  *
+  * Extends one prototype by another.
+  * The subtype will have two specialpurpose properties:
+  *     superstructor    The parent prototype's constructor
+  *     supertype        The parent prototype
   */
 Freja.Class = {};
-Freja.Class.extend = function(subClass, superClass) {
+Freja.Class.extend = function(subClass, superstructor) {
 	var inlineSuper = function(){};
-	inlineSuper.prototype = superClass.prototype;
+	inlineSuper.prototype = superstructor.prototype;
 	subClass.prototype = new inlineSuper();
 	subClass.prototype.constructor = subClass;
-	subClass.prototype.superClass = superClass;
+	subClass.prototype.superstructor = superstructor;
+	subClass.prototype.supertype = superstructor.prototype;
 }
 /**
   * This code was written by Tyler Akins and has been placed in the
