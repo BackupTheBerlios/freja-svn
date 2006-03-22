@@ -71,43 +71,6 @@ Freja.Class.extend = function(subClass, superstructor) {
 	subClass.prototype.supertype = superstructor.prototype;
 }
 /**
-  * This code was written by Tyler Akins and has been placed in the
-  * public domain.  It would be nice if you left this header intact.
-  * Base64 code from Tyler Akins -- http://rumkin.com
-  */
-Freja.Base64 = {};
-Freja.Base64.keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-Freja.Base64.encode = function(input) {
-	var output = "";
-	var chr1, chr2, chr3;
-	var enc1, enc2, enc3, enc4;
-	var i = 0;
-	var keyStr = this.keyStr;
-
-	do {
-		chr1 = input.charCodeAt(i++);
-		chr2 = input.charCodeAt(i++);
-		chr3 = input.charCodeAt(i++);
-
-		enc1 = chr1 >> 2;
-		enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
-		enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
-		enc4 = chr3 & 63;
-
-		if (isNaN(chr2)) {
-			enc3 = enc4 = 64;
-		} else if (isNaN(chr3)) {
-			enc4 = 64;
-		}
-
-		output = output + keyStr.charAt(enc1) + keyStr.charAt(enc2) +
-		keyStr.charAt(enc3) + keyStr.charAt(enc4);
-	} while (i < input.length);
-
-	return output;
-}
-
-/**
   * The baseclass for queryengines
   * @abstract
   */
@@ -246,13 +209,7 @@ Freja.Model.prototype.save = function() {
 	// since the serialization may fail, we create a deferred for the
 	// purpose, rather than just returning the sendXMLHttpRequest directly.
 	var d = new MochiKit.Async.Deferred();
-
-	var req = new XMLHttpRequest();
-	req.open("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
-	if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
-		var auth = "Basic " + Freja.Base64.encode(Freja.AssetManager.USERNAME + ":" + Freja.AssetManager.PASSWORD);
-		req.setRequestHeader("Authorization", auth);
-	}
+	var req = Freja.AssetManager.openXMLHttpRequest("POST", url);
 	try {
 		// for some obscure reason exceptions aren't thrown back if I call the
 		// shorthand version of sendXMLHttpRequest in IE6.
@@ -272,18 +229,7 @@ Freja.Model.prototype.remove = function() {
 	if (match) {
 		url = match[1] + url; // local
 	}
-	var req = new XMLHttpRequest();
-	if (Freja.AssetManager.HTTP_METHOD_TUNNEL) {
-		req.open("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
-		req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, "DELETE");
-		req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-	} else {
-		req.open("DELETE", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
-	}
-	if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
-		var auth = "Basic " + Freja.Base64.encode(Freja.AssetManager.USERNAME + ":" + Freja.AssetManager.PASSWORD);
-		req.setRequestHeader("Authorization", auth);
-	}
+	var req = Freja.AssetManager.openXMLHttpRequest("DELETE", url);
 	return MochiKit.Async.sendXMLHttpRequest(req);
 }
 /**
@@ -324,19 +270,7 @@ Freja.Model.DataSource.prototype.create = function(values) {
 	if (match) {
 		url = match[1] + url; // local
 	}
-	var req = new XMLHttpRequest();
-	if (Freja.AssetManager.HTTP_METHOD_TUNNEL) {
-		req.open("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
-		req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, "PUT");
-		req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-	} else {
-		req.open("PUT", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async");
-	}
-	if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
-		var auth = "Basic " + Freja.Base64.encode(Freja.AssetManager.USERNAME + ":" + Freja.AssetManager.PASSWORD);
-		req.setRequestHeader("Authorization", auth);
-	}
-
+	var req = Freja.AssetManager.openXMLHttpRequest("PUT", url);
 	var payload = {};
 	for (var i = 0, len = values[0].length; i < len; ++i) {
 		payload[values[0][i]] = values[1][i];
@@ -525,7 +459,7 @@ Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, v
 //	if (xslParams)
 //		postedData  = postedData + "&xslParam=" + encodeURIComponent(xslParams.toString());
 	// send request to the server-side XSL transformation service
-	var req = new XMLHttpRequest();
+	var req = Freja.AssetManager.openXMLHttpRequest("POST", Freja.AssetManager.XSLT_SERVICE_URL);
 	req.onreadystatechange = function() {
 		if (req.readyState == 4) {
 			if (req.status == 200) {
@@ -534,13 +468,6 @@ Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, v
 				d.errback(req.responseText);
 			}
 		}
-	}
-	var async = Freja.AssetManager.HTTP_REQUEST_TYPE == "async";
-	req.open("POST", Freja.AssetManager.XSLT_SERVICE_URL, async);
-	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-	if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
-		var auth = "Basic " + Freja.Base64.encode(Freja.AssetManager.USERNAME + ":" + Freja.AssetManager.PASSWORD);
-		req.setRequestHeader("Authorization", auth);
 	}
 	req.send(postedData);
 	return d;
@@ -651,6 +578,30 @@ Freja.AssetManager.getView = function(url) {
 	return v;
 }
 /**
+  * Creates and opens a http-request, tunneling exotic methods if needed.
+  */
+Freja.AssetManager.openXMLHttpRequest = function(method, url) {
+	var req = new XMLHttpRequest();
+	var async = Freja.AssetManager.HTTP_REQUEST_TYPE == "async";
+	var tunnel = null;
+	if (Freja.AssetManager.HTTP_METHOD_TUNNEL && method != "GET" && method != "POST") {
+		tunnel = method;
+		method = "POST";
+	}
+	if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
+		req.open(method, url, async, Freja.AssetManager.USERNAME, Freja.AssetManager.PASSWORD);
+	} else {
+		req.open(method, url, async);
+	}
+	if (tunnel) {
+		req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, tunnel);
+	}
+	if (method == "POST" || method == "PUT") {
+		req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+	}
+	return req;
+}
+/**
   * @returns MochiKit.Async.Deferred
   */
 Freja.AssetManager.loadAsset = function(url, preventCaching) {
@@ -680,16 +631,21 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 		var req = new XMLHttpRequest();
 		var async = Freja.AssetManager.HTTP_REQUEST_TYPE == "async";
 		if (preventCaching && Freja.AssetManager.HTTP_METHOD_TUNNEL) {
-			req.open("POST", url, async);
+			if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
+				req.open("POST", url, async, Freja.AssetManager.USERNAME, Freja.AssetManager.PASSWORD);
+			} else {
+				req.open("POST", url, async);
+			}
 			req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, "GET");
 			req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 		} else {
-			req.open("GET", url, async);
+			if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
+				req.open("GET", url, async, Freja.AssetManager.USERNAME, Freja.AssetManager.PASSWORD);
+			} else {
+				req.open("GET", url, async);
+			}
 		}
-		if (Freja.AssetManager.USERNAME && Freja.AssetManager.PASSWORD) {
-			var auth = "Basic " + Freja.Base64.encode(Freja.AssetManager.USERNAME + ":" + Freja.AssetManager.PASSWORD);
-			req.setRequestHeader("Authorization", auth);
-		}
+
 		// This shouldn't be nescesary, but alas it is - firefox chokes
 		// It's probably due to an error in MochiKit, so the problem
 		// should be fixed there.
@@ -697,7 +653,7 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 		if (async) {
 			comm.addCallbacks(handler, bind(d.errback, d));
 		} else {
-			if (req.status == 200 || req.status == 304) {
+			if (req.status == 0 || req.status == 200 || req.status == 304) {
 				handler(req);
 			} else {
 				d.errback(new Error("Request failed:" + req.status));
