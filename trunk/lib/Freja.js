@@ -105,8 +105,49 @@ Freja.External.transformXSL = function(xml, xsl) {
 	return Freja.External.serializeXML(processor.transformToDocument(xml));
 
 };
+/** cloneXMLDocument(document) : XMLDocument */
+Freja.External.cloneXMLDocument = function(xmlDoc) {
+	var clone = null;
+	try {
+		clone = xmlDoc.cloneNode(true);
+	} catch(e) { /* squelch */ }
+
+	// Can't clone a DocumentNode in Safari & Opera. Let's try something else.
+	// @note Wouldn't it be easier to serialize the document to string and the parse it to a new document ?
+	if (!clone) {
+		if (document.implementation && document.implementation.createDocument) {
+			clone = document.implementation.createDocument("", xmlDoc.documentElement.nodeName, null);
+			// importNode is not safe in Safari ! the source document is altered. used cloneNode to fix the prblm
+			var data = clone.importNode(xmlDoc.documentElement.cloneNode(true), true);
+			try {
+				clone.appendChild(data);
+			} catch(e) {
+				// Opera has already created a documentElement and can't append another root node
+				var rootNode = clone.documentElement;
+				for (var i = data.childNodes.length; i >= 0; i--) {
+					rootNode.insertBefore(data.childNodes[i], rootNode.firstChild);
+				}
+				// need to copy root node attributes
+				for (var i = 0; i < xmlDoc.documentElement.attributes.length; i++) {
+					var name  = xmlDoc.documentElement.attributes.item(i).name;
+					var value = xmlDoc.documentElement.attributes.item(i).value;
+					clone.documentElement.setAttribute(name, value);
+				}
+			}
+		}
+	}
+	return clone;
+};
 /** hasSupportForXSLT() : boolean */
 Freja.External.hasSupportForXSLT = (typeof(XSLTProcessor) != "undefined");
+/** createQueryEngine() : Freja.QueryEngine */
+Freja.External.createQueryEngine = function() {
+	if (Sarissa.IS_ENABLED_SELECT_NODES) {
+		return new Freja.QueryEngine.XPath();
+	} else {
+		return new Freja.QueryEngine.SimplePath();
+	}
+};
 /**
   * Single-hierarchy inheritance (class emulation)
   * @see    http://www.itsalleasy.com/2006/02/05/prototype-chain/
@@ -526,13 +567,98 @@ Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, v
 	return d;
 }
 /**
+  * This is largely s copied with minor stylistic adjustments from Freja 1.1
+  * I renamed it from Controller.history to distinguish between window.history
+  */
+Freja.UndoHistory = function() {
+	this.cache = [];
+	this.maxLength = 5;
+	this._position = 0;
+	this._undoSteps = 0;
+};
+/**
+  * Creates a snapshot of the model and stores it.
+  */
+Freja.UndoHistory.prototype.add = function(model) {
+	var historyIndex = this._position % this.maxLength;
+
+	var modelDoc = model.document;
+	this.cache[historyIndex] = {};
+	this.cache[historyIndex].model = model;
+	this.cache[historyIndex].document = Freja.External.cloneXMLDocument(modelDoc);
+
+	if (!this.cache[historyIndex].document) {
+		throw new Error("Couldn't add to history.");
+	} else {
+		this._position++;
+		// clear rest of the history if undo was used.
+		var clearHistoryIndex = historyIndex;
+		while (this._undoSteps > 0) {
+			clearHistoryIndex = (clearHistoryIndex + 1) % this.maxLength;
+			this.cache[clearHistoryIndex] = {};
+			this._undoSteps--;
+		}
+		return historyIndex; // what would anybody need this for ?
+	}
+};
+/**
+  * Rolls the state back one step.
+  */
+Freja.UndoHistory.prototype.undo = function(steps) {
+	if (this._undoSteps < this.cache.length) {
+		this._undoSteps++;
+		this._position--;
+		if (this._position < 0) {
+			this._position = this.maxLength - 1;
+		}
+
+		var model = this.cache[this._position].model;
+		if (this.cache[this._position].document) {
+			model.document = this.cache[this._position].document;
+		} else {
+			throw new Error("The model's DOMDocument wasn't properly copied into the history");
+		}
+		if (typeof(steps) != "undefined" && steps > 1) {
+			this.undo(steps - 1);
+		}
+	} else {
+		throw new Error("Nothing to undo");
+	}
+};
+/**
+  * Reverts the effects of undo.
+  */
+Freja.UndoHistory.prototype.redo = function() {
+	if (this._undoSteps > 0) {
+		this._undoSteps--;
+		this._position = (this._position + 1) % this.maxLength;
+
+		var model = this.cache[this._position].model;
+		model.document = this.cache[this._position].document;
+	} else {
+		throw new Error("Nothing to redo");
+	}
+};
+
+/**
+  * Removes the last entry in the cache
+  */
+Freja.UndoHistory.prototype.removeLast = function() {
+	this._position--;
+
+	if (this._position < 0) {
+		this._position = this.maxLength - 1;
+	}
+	this.cache[this._position] = {};
+	this._undoSteps = 0;
+};
+/**
   * main repository
   * @static
   */
 Freja.AssetManager = {
 	models : [],
-	views : [],
-	undoHistory : []	// this isn't used atm
+	views : []
 }
 /**
   * Set to sync to make all requests synchroneous. You shouldn't use
@@ -562,16 +688,6 @@ Freja.AssetManager.THROBBER_HTML = "<span style='color:white;background:firebric
 Freja.AssetManager.USERNAME = null;
 Freja.AssetManager.PASSWORD = null;
 /**
-  * returns an instance of the queryengine to use
-  */
-Freja.AssetManager.createQueryEngine = function() {
-	if (Sarissa.IS_ENABLED_SELECT_NODES) {
-		return new Freja.QueryEngine.XPath();
-	} else {
-		return new Freja.QueryEngine.SimplePath();
-	}
-}
-/**
   * returns an instance of the renderengine to use
   */
 Freja.AssetManager.createRenderer = function() {
@@ -600,7 +716,7 @@ Freja.AssetManager.getModel = function(url) {
 			return this.models[i];
 		}
 	}
-	var m = new Freja.Model(url, this.createQueryEngine());
+	var m = new Freja.Model(url, Freja.External.createQueryEngine());
 	var onload = Freja.External.bind(function(document) {
 		this.document = document;
 		this.ready = true;
