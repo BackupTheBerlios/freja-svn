@@ -166,12 +166,12 @@ Freja.Class.extend = function(subClass, superconstructor) {
 	subClass.prototype.constructor = subClass;
 	subClass.prototype.superconstructor = superconstructor;
 	subClass.prototype.supertype = superconstructor.prototype;
-}
+};
 /**
   * The baseclass for queryengines
   * @abstract
   */
-Freja.QueryEngine = function() {}
+Freja.QueryEngine = function() {};
 Freja.QueryEngine.prototype.getElementById = function(document, id) {
 	// getElementById doesn't work on XML document without xml:id
 	var allElements = document.getElementsByTagName("*");
@@ -180,17 +180,17 @@ Freja.QueryEngine.prototype.getElementById = function(document, id) {
 			return allElements[i];
 		}
 	}
-}
+};
 Freja.QueryEngine.prototype.get = function(document, expression) {
 	return this._find(document, expression).nodeValue;
-}
+};
 Freja.QueryEngine.prototype.set = function(document, expression, value) {
 	this._find(document, expression).nodeValue = value;
-}
+};
 /**
   * XPath query engine.
   */
-Freja.QueryEngine.XPath = function() {}
+Freja.QueryEngine.XPath = function() {};
 Freja.Class.extend(Freja.QueryEngine.XPath, Freja.QueryEngine);
 Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 	var node = document.selectSingleNode(expression);
@@ -202,7 +202,7 @@ Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 		return node.firstChild;
 	}
 	throw new Error("Can't evaluate expression " + expression);
-}
+};
 /**
   * SimplePath
   */
@@ -245,7 +245,7 @@ Freja.QueryEngine.SimplePath.prototype._find = function(document, expression) {
 		throw new Error("Can't evaluate expression " + expression);
 	}
 	return node;
-}
+};
 /**
   * Standard model component
   */
@@ -256,7 +256,7 @@ Freja.Model = function(url, query) {
 	this.document = null;
 	this.query = query;
 	Freja.External.registerSignals(this, ["onload"]);
-}
+};
 /**
   * Returns a single value
   */
@@ -265,7 +265,7 @@ Freja.Model.prototype.getElementById = function(id) {
 		return this.query.getElementById(this.document, id);
 	}
 	return null;
-}
+};
 /**
   * Returns a single value
   */
@@ -274,7 +274,7 @@ Freja.Model.prototype.get = function(expression) {
 		return this.query.get(this.document, expression);
 	}
 	return null;
-}
+};
 /**
   * Updates a value
   */
@@ -283,7 +283,7 @@ Freja.Model.prototype.set = function(expression, value) {
 		return this.query.set(this.document, expression, value);
 	}
 	return null;
-}
+};
 /**
   * Updates the model from a view
   */
@@ -292,7 +292,7 @@ Freja.Model.prototype.updateFrom = function(view) {
 	for (var i = 0; i < values[0].length; ++i) {
 		this.set(values[0][i], values[1][i]);
 	}
-}
+};
 /**
   * Writes the model back to the remote service
   * @returns MochiKit.Async.Deferred
@@ -315,7 +315,7 @@ Freja.Model.prototype.save = function() {
 		d.errback(ex);
 	}
 	return d;
-}
+};
 /**
   * Deletes the model from the remote service
   * @returns MochiKit.Async.Deferred
@@ -328,7 +328,7 @@ Freja.Model.prototype.remove = function() {
 	}
 	var req = Freja.AssetManager.openXMLHttpRequest("DELETE", url);
 	return Freja.External.sendXMLHttpRequest(req);
-}
+};
 /**
   * @returns MochiKit.Async.Deferred
   */
@@ -342,15 +342,14 @@ Freja.Model.prototype.reload = function() {
 	var d = Freja.AssetManager.loadAsset(this.url, true);
 	d.addCallbacks(onload, Freja.AssetManager.onerror);
 	return d;
-}
-
+};
 /**
   * DataSource provides a gateway-type interface to a REST service.
   */
 Freja.Model.DataSource = function(createURL, indexURL) {
 	this.createURL = createURL;
 	this.indexURL = indexURL;
-}
+};
 /**
   * Returns a list of primary-keys to records in the datasource
   */
@@ -373,8 +372,7 @@ Freja.Model.DataSource.prototype.create = function(values) {
 		payload[values[0][i]] = values[1][i];
 	}
 	return Freja.External.sendXMLHttpRequest(req, Freja.External.xmlize(payload, 'record'));
-}
-
+};
 /**
   * Standard view component
   */
@@ -389,7 +387,7 @@ Freja.View = function(url, renderer) {
 	this.destination = null;
 	Freja.External.registerSignals(this, ["onload","onrendercomplete"]);
 	Freja.External.connect(this, "onrendercomplete", Freja.External.bind(this.connectBehaviour, this));
-}
+};
 /**
   * @param    model            Freja.Model
   * @param    placeholder      string    If supplied, this will be used instead of the
@@ -402,7 +400,7 @@ Freja.View.prototype.render = function(model, placeholder /* optional */ ) {
 		this.model = model;
 		this.view = view;
 		this.deferred = deferred;
-	}
+	};
 
 	Handler.prototype.trigger = function() {
 		try {
@@ -429,7 +427,7 @@ Freja.View.prototype.render = function(model, placeholder /* optional */ ) {
 		} catch (ex) {
 			this.deferred.errback(ex);
 		}
-	}
+	};
 
 	var d = Freja.External.createDeferred();
 	try {
@@ -445,8 +443,7 @@ Freja.View.prototype.render = function(model, placeholder /* optional */ ) {
 		d.errback(ex);
 	}
 	return d;
-}
-
+};
 /**
   * Decorates the output of the primary renderer, to inject behaviour.
   * @note Maybe we could use cssQuery (http://dean.edwards.name/my/cssQuery/)
@@ -469,7 +466,7 @@ Freja.View.prototype.connectBehaviour = function(destination) {
 					}
 				}, node)
 			);
-		}
+		};
 		var applyHandlers = function(node, handlers) {
 			for (var i = 0, c = node.childNodes, l = c.length; i < l; ++i) {
 				var child = c[i];
@@ -490,27 +487,26 @@ Freja.View.prototype.connectBehaviour = function(destination) {
 					applyHandlers(child, handlers);
 				}
 			}
-		}
+		};
 		applyHandlers(destination, this.handlers);
 	} catch (ex) {
 		alert(ex.message);
 	}
-}
+};
 /**
   * Returns the values of a formview
   */
 Freja.View.prototype.getValues = function() {
 	return formContents(this.destination);
-}
-
+};
 /**
   * Base object for viewrenderers
   */
-Freja.View.Renderer = function() {}
+Freja.View.Renderer = function() {};
 /**
   * XSLT based render-engine
   */
-Freja.View.Renderer.XSLTransformer = function() {}
+Freja.View.Renderer.XSLTransformer = function() {};
 Freja.Class.extend(Freja.View.Renderer.XSLTransformer, Freja.View.Renderer);
 /**
   * @returns MochiKit.Async.Deferred
@@ -532,14 +528,14 @@ Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view) {
 		d.errback(ex);
 	}
 	return d;
-}
+};
 /**
   * XSLT on a remote service for browser which have no native support.
   * @param    url    URL of the transform service
   */
 Freja.View.Renderer.RemoteXSLTransformer = function(url) {
 	this.url = url;
-}
+};
 Freja.Class.extend(Freja.View.Renderer.RemoteXSLTransformer, Freja.View.Renderer);
 /**
   * @returns MochiKit.Async.Deferred
@@ -565,7 +561,7 @@ Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, v
 	}
 	req.send(postedData);
 	return d;
-}
+};
 /**
   * This is largely s copied with minor stylistic adjustments from Freja 1.1
   * I renamed it from Controller.history to distinguish between window.history
@@ -639,7 +635,6 @@ Freja.UndoHistory.prototype.redo = function() {
 		throw new Error("Nothing to redo");
 	}
 };
-
 /**
   * Removes the last entry in the cache
   */
@@ -658,8 +653,10 @@ Freja.UndoHistory.prototype.removeLast = function() {
   */
 Freja.AssetManager = {
 	models : [],
-	views : []
-}
+	views : [],
+	_username : null,
+	_password : null
+};
 /**
   * Set to sync to make all requests synchroneous. You shouldn't use
   * this setting for anything but testing/debugging.
@@ -667,9 +664,12 @@ Freja.AssetManager = {
   */
 Freja.AssetManager.HTTP_REQUEST_TYPE = "async";
 /**
-  * If this is set to NULL, real PUT and DELETE http-requests will be made,
+  * If this is set to null, real PUT and DELETE http-requests will be made,
   * otherwise a header will be set instead, and the request tunneled through
-  * POST. For compatibility, you should use tunneling.
+  * POST.
+  *
+  * Both IE6 and FF1.5 are known to support the required HTTP methods, so
+  * if theese are your target platform, you can disable tunneling.
   */
 // Freja.AssetManager.HTTP_METHOD_TUNNEL = null;
 Freja.AssetManager.HTTP_METHOD_TUNNEL = "Http-Method-Equivalent";
@@ -683,11 +683,6 @@ Freja.AssetManager.XSLT_SERVICE_URL = "srvc-xslt.php";
   */
 Freja.AssetManager.THROBBER_HTML = "<span style='color:white;background:firebrick'>Loading ...</span>";
 /**
-  * Set USERNAME + PASSWORD to authenticate with basic HTTP-Authorization.
-  */
-Freja.AssetManager.USERNAME = null;
-Freja.AssetManager.PASSWORD = null;
-/**
   * returns an instance of the renderengine to use
   */
 Freja.AssetManager.createRenderer = function() {
@@ -697,7 +692,7 @@ Freja.AssetManager.createRenderer = function() {
 	} else {
 		return new Freja.View.Renderer.RemoteXSLTransformer(this.XSLT_SERVICE_URL);
 	}
-}
+};
 /**
   * Wipes all caches. This isn't something you will normally use during production,
   * but it's very helpful for debugging/testing
@@ -705,7 +700,7 @@ Freja.AssetManager.createRenderer = function() {
 Freja.AssetManager.clearCache = function() {
 	this.models = [];
 	this.views = [];
-}
+};
 /**
   * Load a model-component
   * @param    url      string
@@ -725,7 +720,7 @@ Freja.AssetManager.getModel = function(url) {
 	this.loadAsset(url, true).addCallbacks(onload, Freja.AssetManager.onerror);
 	this.models.push(m);
 	return m;
-}
+};
 /**
   * Load a view-component
   * @param    url      string
@@ -745,7 +740,7 @@ Freja.AssetManager.getView = function(url) {
 	this.loadAsset(url, false).addCallbacks(onload, Freja.AssetManager.onerror);
 	this.views.push(v);
 	return v;
-}
+};
 /**
   * Creates and opens a http-request, tunneling exotic methods if needed.
   */
@@ -755,12 +750,19 @@ Freja.AssetManager.openXMLHttpRequest = function(method, url) {
 		tunnel = method;
 		method = "POST";
 	}
-	var req = Freja.External.openXMLHttpRequest(method, url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async", Freja.AssetManager.USERNAME, Freja.AssetManager.PASSWORD);
+	var req = Freja.External.openXMLHttpRequest(method, url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async", Freja.AssetManager._username, Freja.AssetManager._password);
 	if (tunnel) {
 		req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, tunnel);
 	}
 	return req;
-}
+};
+/**
+  * Sets username + password for Http-Authentication
+  */
+Freja.AssetManager.setCredentials = function(username, password) {
+	this._username = username;
+	this._password = password;
+};
 /**
   * @returns MochiKit.Async.Deferred
   */
@@ -786,14 +788,14 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 			d.errback(ex);
 		}
 		d.callback(document);
-	}
+	};
 	try {
 		if (preventCaching && Freja.AssetManager.HTTP_METHOD_TUNNEL) {
-			var req = Freja.External.openXMLHttpRequest("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async", Freja.AssetManager.USERNAME, Freja.AssetManager.PASSWORD);
+			var req = Freja.External.openXMLHttpRequest("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async", Freja.AssetManager._username, Freja.AssetManager._password);
 			req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, "GET");
 			req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 		} else {
-			var req = Freja.External.openXMLHttpRequest("GET", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async", Freja.AssetManager.USERNAME, Freja.AssetManager.PASSWORD);
+			var req = Freja.External.openXMLHttpRequest("GET", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async", Freja.AssetManager._username, Freja.AssetManager._password);
 		}
 
 		// This shouldn't be nescesary, but alas it is - firefox chokes
@@ -813,7 +815,7 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 		d.errback(ex);
 	}
 	return d;
-}
+};
 /**
   * This is a default error-handler. You should provide your own.
   * The handler is called if an asynchronous error happens, since
@@ -823,7 +825,7 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
   */
 Freja.AssetManager.onerror = function(ex) {
 	alert("Freja.AssetManager.onerror\n" + ex.message);
-}
+};
 /**
   * Global exports
   */
