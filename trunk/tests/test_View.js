@@ -19,6 +19,21 @@ tests.test_View = function (t) {
 	t.is(out.getElementsByTagName("H3").length, 1);
 	t.is(out.getElementsByTagName("H3").item(0).firstChild.nodeValue, model.get("item/name"), "Rendered view should contain the models value");
 
+	// test of pojo model
+	Freja.AssetManager.clearCache();
+	var view = Freja.AssetManager.getView("data/view.xsl");
+	var out = document.createElement("DIV");
+	view.placeholder = out;
+
+	var pojo = {
+		name : "pojo",
+		description : "Plain Old Javascript Object",
+		price : "Priceless"
+	};
+	view.render(pojo);
+
+	t.ok(out.innerHTML.toLowerCase().match("<p>plain old javascript object</p>"));
+
 	// test of form
 	var formView = Freja.AssetManager.getView("data/form-view.xsl");
 	var testofsubmit = false;
@@ -32,6 +47,9 @@ tests.test_View = function (t) {
 	out.parentNode.removeChild(out);
 
 	t.ok(testofsubmit, "The form has been intercepted by our handler");
+
+	//////////////////////////////////////////////////////////////////////
+	// async tests below
 
 	// we can't test asynch function properly, but we can fire them and assert that
 	// they don't throw any exceptions at least
@@ -50,4 +68,5 @@ tests.test_View = function (t) {
 		exc = ex;
 	}
 	t.ok(exc == false, "The render should be postproned until loading have completed");
+
 };

@@ -408,12 +408,19 @@ Freja.View.prototype.render = function(model, placeholder /* optional */ ) {
 				Freja.External.connect(this.view, "onload", Freja.External.bind(this.trigger, this));
 				return;
 			}
-			if (this.model && !this.model.ready) {
+			if (typeof(this.model) == "object" && this.model instanceof Freja.Model && !this.model.ready) {
 				Freja.External.connect(this.model, "onload", Freja.External.bind(this.trigger, this));
 				return;
 			}
-			if (!model) {
+			var model;
+			if (typeof(this.model) == "undefined") {
+				// supply dummy
 				model = { document : Freja.External.loadXML("<?xml version='1.0' ?><dummy/>")};
+			} else if (this.model instanceof Freja.Model) {
+				model = this.model;
+			} else {
+				// wrap pojo's in
+				model = { document : Freja.External.loadXML("<?xml version='1.0' ?>\n" + Freja.External.xmlize(this.model, "item")) };
 			}
 			var trans = this.view.renderer.transform(model, this.view);
 			trans.addCallback(Freja.External.bind(function(html) {
