@@ -13,8 +13,7 @@ tests.test_View = function (t) {
 
 	var model = Freja.AssetManager.getModel("data/model.xml");
 	var out = document.createElement("DIV");
-	view.placeholder = out;
-	view.render(model);
+	view.render(model, out);
 
 	t.is(out.getElementsByTagName("H3").length, 1);
 	t.is(out.getElementsByTagName("H3").item(0).firstChild.nodeValue, model.get("item/name"), "Rendered view should contain the models value");
@@ -23,14 +22,13 @@ tests.test_View = function (t) {
 	Freja.AssetManager.clearCache();
 	var view = Freja.AssetManager.getView("data/view.xsl");
 	var out = document.createElement("DIV");
-	view.placeholder = out;
 
 	var pojo = {
 		name : "pojo",
 		description : "Plain Old Javascript Object",
 		price : "Priceless"
 	};
-	view.render(pojo);
+	view.render(pojo, out);
 
 	t.ok(out.innerHTML.toLowerCase().match("<p>plain old javascript object</p>"));
 
@@ -40,8 +38,7 @@ tests.test_View = function (t) {
 	formView.handlers["form"] = {
 		onsubmit : function() { testofsubmit = true; }
 	};
-	formView.placeholder = out;
-	formView.render(model);
+	formView.render(model, out);
 	$("out").appendChild(out);
 	$("form-submit").click();
 	out.parentNode.removeChild(out);
@@ -56,14 +53,13 @@ tests.test_View = function (t) {
 	Freja.AssetManager.clearCache();
 	var view = Freja.AssetManager.getView("data/view.xsl");
 	var out = document.createElement("DIV");
-	view.placeholder = out;
 	// you may uncomment the following line to manually verify that the view gets rendered
 //	$("out").appendChild(out);
 	Freja.AssetManager.HTTP_REQUEST_TYPE = "async";
 	var model = Freja.AssetManager.getModel("data/model.xml");
 	var exc = false;
 	try {
-		view.render(model);
+		view.render(model, out);
 	} catch (ex) {
 		exc = ex;
 	}
