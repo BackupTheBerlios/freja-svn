@@ -40,18 +40,18 @@ if (typeof(Freja) == "undefined") {
 	Freja = {};
 }
 Freja._aux = {};
-/** bind(func, self[, arg, ...]) : function */
+/** bind(func, self) : function */
 Freja._aux.bind = MochiKit.Base.bind;
 /** formContents(elem) : Array */
 Freja._aux.formContents = MochiKit.DOM.formContents;
-/** getElement() : HTMLElement */
+/** getElement(id) : HTMLElement */
 Freja._aux.getElement = MochiKit.DOM.getElement;
 
 /** registerSignals(src, signals) : void */
 Freja._aux.registerSignals = MochiKit.Signal.registerSignals;
-/** connect(src, signal, dest[, func]) : void */
+/** connect(src, signal, fnc) : void */
 Freja._aux.connect = MochiKit.Signal.connect;
-/** signal(src, signal, ...) : void */
+/** signal(src, signal, arg) : void */
 Freja._aux.signal = MochiKit.Signal.signal;
 /** createDeferred() : Deferred */
 Freja._aux.createDeferred = function() {
