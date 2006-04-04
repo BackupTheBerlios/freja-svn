@@ -12,6 +12,9 @@ if (typeof(Freja) == "undefined") {
 Freja._aux = {};
 /** bind(func, self) : function */
 Freja._aux.bind = function(func, self) {
+	if(typeof (func)=="string"){
+		func=self[func];
+	}
 	return function() { func.apply(self, arguments); };
 };
 /** formContents(elem) : Array */
