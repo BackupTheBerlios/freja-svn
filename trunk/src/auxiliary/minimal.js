@@ -11,11 +11,25 @@ if (typeof(Freja) == "undefined") {
 }
 Freja._aux = {};
 /** bind(func, self) : function */
+// from http://blog.ianbicking.org/prototype-and-object-prototype.html
 Freja._aux.bind = function(func, self) {
 	if(typeof (func)=="string"){
 		func=self[func];
 	}
-	return function() { func.apply(self, arguments); };
+		
+	var im_func = null;
+    if (typeof(func.im_func) == 'function') {
+        im_func = func.im_func;
+    } else {
+        im_func = func;
+    }
+    func = function () {
+        return func.im_func.apply(func.im_self, arguments);
+    }
+    func.im_func = im_func;
+    func.im_self = self;
+	return func;
+	
 };
 /** formContents(elem) : Array */
 Freja._aux.formContents = function(elem) {
@@ -108,6 +122,7 @@ Freja._aux.connect = function(src, signal, fnc) {
 };
 /** signal(src, signal, ...) : void */
 Freja._aux.signal = function(src, signal) {
+	
 	try {
 		var sigs = src._signals[signal];
 		var args = [];
@@ -115,7 +130,7 @@ Freja._aux.signal = function(src, signal) {
 			args.push(arguments[i]);
 		}
 		for (var i=0; i < sigs.length; i++) {
-			try {
+			try {							
 				sigs[i].apply(src, args);
 			} catch (e) { /* squelch */ }
 		}
