@@ -85,6 +85,7 @@ Freja._aux.getElement = function(id) {
 Freja._aux.registerSignals = function(src, signals) { /* void */ };
 /** connect(src, signal, fnc) : void */
 Freja._aux.connect = function(src, signal, fnc) {
+
 	if(!src) return;
 	if (src.addEventListener) {
 		var wrapper = function(e) {
@@ -218,12 +219,15 @@ Freja._aux.loadXML = function(text) {
 	return (new DOMParser()).parseFromString(text, "text/xml");
 };
 /** transformXSL(XMLDocument, XSLDocument) : string */
-Freja._aux.transformXSL = function(xml, xsl) {
+Freja._aux.transformXSL = function(xml, xsl, xslParameters) {
 	if (xml.transformNode) {
 		return xml.transformNode(xsl);
 	};
 	var processor = new XSLTProcessor();
 	processor.importStylesheet(xsl);
+	for(var paramName in xslParameters) {
+		processor.setParameter(null, paramName,xslParameters[paramName]); 
+	}
 	return Freja._aux.serializeXML(processor.transformToDocument(xml));
 
 };
