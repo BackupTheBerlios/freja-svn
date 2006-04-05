@@ -18,7 +18,7 @@ Freja.View = function(url, renderer) {
   *                                      default placeholder.
   * @returns MochiKit.Async.Deferred
   */
-Freja.View.prototype.render = function(model, placeholder) {
+Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 	if (typeof(placeholder) == "undefined") placeholder = this.placeholder;
 
 	var Handler = function(model, view, deferred) {
@@ -28,6 +28,7 @@ Freja.View.prototype.render = function(model, placeholder) {
 	};
 
 	Handler.prototype.trigger = function() {
+	
 		try {
 			if (!this.view.ready) {
 				Freja._aux.connect(this.view, "onload", Freja._aux.bind(this.trigger, this));
@@ -47,14 +48,14 @@ Freja.View.prototype.render = function(model, placeholder) {
 				// wrap pojo's in
 				model = { document : Freja._aux.loadXML("<?xml version='1.0' ?>\n" + Freja._aux.xmlize(this.model, "item")) };
 			}
-			var trans = this.view._renderer.transform(model, this.view);
+			var trans = this.view._renderer.transform(model, this.view, xslParameters);
 			trans.addCallback(Freja._aux.bind(function(html) {
 				this._destination.innerHTML = html;
 			}, this.view));
 			trans.addCallback(Freja._aux.bind(function() {
 				Freja._aux.signal(this, "onrendercomplete", this._destination)
 			}, this.view));
-			trans.addCallback(this.deferred.callback);
+			//trans.addCallback(this.deferred.callback);
 			trans.addErrback(this.deferred.errback);
 		} catch (ex) {
 			this.deferred.errback(ex);
@@ -83,6 +84,7 @@ Freja.View.prototype.render = function(model, placeholder) {
 Freja.View.prototype._connectBehaviour = function(destination) {
 	try {
 		var connectCallback = function(node, eventType, callback) {
+		
 			Freja._aux.connect(node, eventType, Freja._aux.bind(
 				function(e) {
 					var allow = false;
@@ -99,7 +101,7 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 			);
 		};
 		var applyHandlers = function(node, handlers) {
-	
+			
 			for (var i = 0, c = node.childNodes, l = c.length; i < l; ++i) {
 				var child = c[i];
 				if (child.nodeType == 1) {
@@ -120,7 +122,14 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 				}
 			}
 		};
-		applyHandlers(destination, this.handlers);
+		
+		// Avoid traversing the DOM tree if there's no handler to process.
+		// @note: is there a better way? this.handlers.length is always 0.
+		for (var ids in this.handlers) {
+			applyHandlers(destination, this.handlers);
+			break;
+		}	
+		
 	} catch (ex) {
 		alert(ex.message);
 	}
@@ -143,10 +152,10 @@ Freja.Class.extend(Freja.View.Renderer.XSLTransformer, Freja.View.Renderer);
 /**
   * @returns MochiKit.Async.Deferred
   */
-Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view) {
+Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();
         try {
-		var html = Freja._aux.transformXSL(model.document, view.document);
+		var html = Freja._aux.transformXSL(model.document, view.document, xslParameters);
 		if (!html) {
 			d.errback(new Error("XSL Transformation error."));
 		} else {
@@ -172,14 +181,14 @@ Freja.Class.extend(Freja.View.Renderer.RemoteXSLTransformer, Freja.View.Renderer
 /**
   * @returns MochiKit.Async.Deferred
   */
-Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, view) {
+Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();
 
 	// prepare posted data  (no need to send the XSL document, just its url)
 	var xslUrl = view.url;
 	var postedData = "xslFile=" + encodeURIComponent(xslUrl) + "&xmlData=" + encodeURIComponent(Freja._aux.serializeXML(model.document));
-//	if (xslParams)
-//		postedData  = postedData + "&xslParam=" + encodeURIComponent(xslParams.toString());
+	if (xslParameters)
+		postedData  = postedData + "&xslParam=" + encodeURIComponent(xslParameters.toString());
 	// send request to the server-side XSL transformation service
 	var req = Freja.AssetManager.openXMLHttpRequest("POST", Freja.AssetManager.XSLT_SERVICE_URL);
 	req.onreadystatechange = function() {
