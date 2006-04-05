@@ -99,11 +99,12 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 			);
 		};
 		var applyHandlers = function(node, handlers) {
+	
 			for (var i = 0, c = node.childNodes, l = c.length; i < l; ++i) {
 				var child = c[i];
 				if (child.nodeType == 1) {
-					var id = child.getAttribute("handler");
-					if (id != "") {
+					var id = child.getAttribute("id");
+					if (id != "") {				
 						var handler = handlers[id];
 						if (handler) {
 							for (var eventType in handler) {
