@@ -301,7 +301,6 @@ Freja._aux.Deferred.prototype.errback = function() {
 Freja._aux.Deferred.prototype.addCallbacks = function(fncOK, fncError) {
 	if (fncOK) this._good[this._good.length] = fncOK;
 	if (fncError) this._bad[this._bad.length] = fncError;
-
 	if (this._pending) {
 		this._pending[0].apply(this, this._pending[1]);
 	}
@@ -310,7 +309,7 @@ Freja._aux.Deferred.prototype.addCallback = function(fncOK) {
 	this.addCallbacks(fncOK);
 };
 Freja._aux.Deferred.prototype.addErrback = function(fncError) {
-	this.addCallbacks(null, fncOK);
+	this.addCallbacks(null, fncError);
 };
 if (document.implementation && document.implementation.hasFeature("XPath", "3.0")) {
 	XMLDocument.prototype.selectNodes = function(sExpr, contextNode) {
@@ -323,8 +322,7 @@ if (document.implementation && document.implementation.hasFeature("XPath", "3.0"
 				nsresolver,
 				XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 		} catch(e) {
-			return null;
-			// throw new Error("Can't evaluate expression " + sExpr);
+			throw new Error("Can't evaluate expression " + sExpr);
 		}
 		var nodeList = new Array(oResult.snapshotLength);
 		nodeList.item = function(i) {
