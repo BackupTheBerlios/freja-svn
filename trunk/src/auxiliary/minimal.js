@@ -36,7 +36,7 @@ Freja._aux.formContents = function(elem) {
 	if (!elem) v = document;
 	var names = [];
 	var values = [];
-	var inputs = elem.getElementsByTagNames("INPUT");
+	var inputs = elem.getElementsByTagName("INPUT");
 	for (var i = 0; i < inputs.length; ++i) {
 		var input = inputs[i];
 		if (input.name) {
@@ -51,7 +51,7 @@ Freja._aux.formContents = function(elem) {
 			}
 		}
 	}
-	var textareas = elem.getElementsByTagNames("TEXTAREA");
+	var textareas = elem.getElementsByTagName("TEXTAREA");
 	for (var i = 0; i < textareas.length; ++i) {
 		var input = textareas[i];
 		if (input.name) {
@@ -59,7 +59,7 @@ Freja._aux.formContents = function(elem) {
 			values.push(input.value);
 		}
 	}
-	var selects = elem.getElementsByTagNames("SELECT");
+	var selects = elem.getElementsByTagName("SELECT");
 	for (var i = 0; i < selects.length; ++i) {
 		var input = textareas[i];
 		if (input.name) {
@@ -316,10 +316,16 @@ if (document.implementation && document.implementation.hasFeature("XPath", "3.0"
 	XMLDocument.prototype.selectNodes = function(sExpr, contextNode) {
 		var nsDoc = this;
 		var nsresolver = this.createNSResolver(this.documentElement);
-		var oResult = this.evaluate(sExpr,
-			(contextNode ? contextNode : this),
-			nsresolver,
-			XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+		
+		try {
+			var oResult = this.evaluate(sExpr,
+				(contextNode ? contextNode : this),
+				nsresolver,
+				XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+		} catch(e) {
+			return null;
+			// throw new Error("Can't evaluate expression " + sExpr);
+		}
 		var nodeList = new Array(oResult.snapshotLength);
 		nodeList.item = function(i) {
 			return (i < 0 || i >= this.length) ? null : this[i];
