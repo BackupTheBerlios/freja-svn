@@ -28,7 +28,6 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 	};
 
 	Handler.prototype.trigger = function() {
-	
 		try {
 			if (!this.view.ready) {
 				Freja._aux.connect(this.view, "onload", Freja._aux.bind(this.trigger, this));
@@ -49,8 +48,8 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 				model = { document : Freja._aux.loadXML("<?xml version='1.0' ?>\n" + Freja._aux.xmlize(this.model, "item")) };
 			}
 			var trans = this.view._renderer.transform(model, this.view, xslParameters);
-			trans.addCallback(Freja._aux.bind(function(html) {
-				this._destination.innerHTML = html;
+			trans.addCallback(Freja._aux.bind(function(html) {									
+				this._destination.innerHTML = html;				
 			}, this.view));
 			trans.addCallback(Freja._aux.bind(function() {
 				Freja._aux.signal(this, "onrendercomplete", this._destination)
@@ -138,7 +137,7 @@ Freja.View.prototype._connectBehaviour = function(destination) {
   * Returns the values of a formview
   */
 Freja.View.prototype.getValues = function() {
-	return formContents(this._destination);
+	return Freja._aux.formContents(this._destination);
 };
 /**
   * Base object for viewrenderers
@@ -162,7 +161,10 @@ Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, x
 			// fix empty textareas
 			// Can't this be fixed by outputting as html rather than xml ?
 			// <xsl:output method="html" />
-			html = html.replace(/<textarea([^\/>]*)\/>/gi,"<textarea $1></textarea>");
+			// (cedsav) don't remember all the details but method="xml" is the way to go.
+			// method="html" would output html not xhtml, plus I think it implies that
+			// you want to output a valid html document (with html, head and body tags).
+			html = html.replace(/<textarea([^>]*)\/>/gi,"<textarea $1></textarea>");
 			d.callback(html);
 		}
 	} catch (ex) {
