@@ -18,8 +18,10 @@ Freja.QueryEngine.prototype.get = function(document, expression) {
 	return null;
 };
 Freja.QueryEngine.prototype.set = function(document, expression, value) {
-	var node = this._find(document, expression);
-	if(node) node.nodeValue = value;
+	var node = this._find(document, expression);	
+	if(node) {
+		node.nodeValue = value;
+	}
 };
 /**
   * XPath query engine.
@@ -34,8 +36,14 @@ Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 		return node.firstChild;
 	} else if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
+	} else if (node && !node.firstChild) {
+		// this is an empty node <tag />. When using 'get' it's fine to return null,
+		// but for 'set', we need to create a textnode somewhere.
+		// for lack of better idea, will do it here.
+		var n = document.createTextNode('');
+		return node.appendChild(n);
 	}
-	// throw new Error("Can't evaluate expression " + expression);
+//	throw new Error("Can't evaluate expression " + expression);
 	return null;
 };
 /**
