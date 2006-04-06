@@ -13,10 +13,13 @@ Freja.QueryEngine.prototype.getElementById = function(document, id) {
 	}
 };
 Freja.QueryEngine.prototype.get = function(document, expression) {
-	return this._find(document, expression).nodeValue;
+	var node = this._find(document, expression);
+	if(node) return node.nodeValue;
+	return null;
 };
 Freja.QueryEngine.prototype.set = function(document, expression, value) {
-	this._find(document, expression).nodeValue = value;
+	var node = this._find(document, expression);
+	if(node) node.nodeValue = value;
 };
 /**
   * XPath query engine.
@@ -32,7 +35,8 @@ Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 	} else if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
 	}
-	throw new Error("Can't evaluate expression " + expression);
+	// throw new Error("Can't evaluate expression " + expression);
+	return null;
 };
 /**
   * SimplePath
