@@ -281,13 +281,14 @@ Freja._aux.Deferred = function() {
 	this._pending = null;
 };
 Freja._aux.Deferred.prototype.callback = function() {
-	if (this._good.length == 0) {
+	if (this._good.length == 0) {	
 		this._pending = [this.callback, arguments];
 		return;
 	}
 	for (var i=0; i < this._good.length; i++) {
-		this._good[i].apply(window, arguments);
+		this._good[i].apply(window, arguments);		
 	}
+	this._good = [];
 };
 Freja._aux.Deferred.prototype.errback = function() {
 	if (this._bad.length == 0) {
@@ -297,6 +298,7 @@ Freja._aux.Deferred.prototype.errback = function() {
 	for (var i=0; i < this._bad.length; i++) {
 		this._bad[i].apply(window, arguments);
 	}
+	this._bad = [];
 };
 Freja._aux.Deferred.prototype.addCallbacks = function(fncOK, fncError) {
 	if (fncOK) this._good[this._good.length] = fncOK;
