@@ -118,7 +118,7 @@ Freja.AssetManager.setCredentials = function(username, password) {
   * @returns MochiKit.Async.Deferred
   */
 Freja.AssetManager.loadAsset = function(url, preventCaching) {
-	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
+	var match = /^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
 	if (match) {
 		url = match[1] + url; // local
 	}
