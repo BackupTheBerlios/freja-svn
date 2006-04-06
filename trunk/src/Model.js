@@ -50,7 +50,7 @@ Freja.Model.prototype.updateFrom = function(view) {
   */
 Freja.Model.prototype.save = function() {
 	var url = this.url;
-	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
+	var match = /^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
 	if (match) {
 		url = match[1] + url; // local
 	}
@@ -73,7 +73,7 @@ Freja.Model.prototype.save = function() {
   */
 Freja.Model.prototype.remove = function() {
 	var url = this.url;
-	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
+	var match = /^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
 	if (match) {
 		url = match[1] + url; // local
 	}
@@ -113,7 +113,7 @@ Freja.Model.DataSource.prototype.select = function() {
   */
 Freja.Model.DataSource.prototype.create = function(values) {
 	var url = this.createURL;
-	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
+	var match = /^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
 	if (match) {
 		url = match[1] + url; // local
 	}
