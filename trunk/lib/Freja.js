@@ -2,7 +2,7 @@
 
     Freja 2.0.alpha
 
-    Build $Sun, 2 Apr 2006 18:14:44 UTC$
+    Build $Thu, 6 Apr 2006 02:50:39 UTC$
 
     Target: minimal
 
@@ -60,8 +60,25 @@ if (typeof(Freja) == "undefined") {
 }
 Freja._aux = {};
 /** bind(func, self) : function */
+// from http://blog.ianbicking.org/prototype-and-object-prototype.html
 Freja._aux.bind = function(func, self) {
-	return function() { func.apply(self, arguments); };
+	if(typeof (func)=="string"){
+		func=self[func];
+	}
+		
+	var im_func = null;
+    if (typeof(func.im_func) == 'function') {
+        im_func = func.im_func;
+    } else {
+        im_func = func;
+    }
+    func = function () {
+        return func.im_func.apply(func.im_self, arguments);
+    }
+    func.im_func = im_func;
+    func.im_self = self;
+	return func;
+	
 };
 /** formContents(elem) : Array */
 Freja._aux.formContents = function(elem) {
@@ -117,6 +134,7 @@ Freja._aux.getElement = function(id) {
 Freja._aux.registerSignals = function(src, signals) { /* void */ };
 /** connect(src, signal, fnc) : void */
 Freja._aux.connect = function(src, signal, fnc) {
+
 	if(!src) return;
 	if (src.addEventListener) {
 		var wrapper = function(e) {
@@ -154,6 +172,7 @@ Freja._aux.connect = function(src, signal, fnc) {
 };
 /** signal(src, signal, ...) : void */
 Freja._aux.signal = function(src, signal) {
+	
 	try {
 		var sigs = src._signals[signal];
 		var args = [];
@@ -161,7 +180,7 @@ Freja._aux.signal = function(src, signal) {
 			args.push(arguments[i]);
 		}
 		for (var i=0; i < sigs.length; i++) {
-			try {
+			try {							
 				sigs[i].apply(src, args);
 			} catch (e) { /* squelch */ }
 		}
@@ -249,12 +268,15 @@ Freja._aux.loadXML = function(text) {
 	return (new DOMParser()).parseFromString(text, "text/xml");
 };
 /** transformXSL(XMLDocument, XSLDocument) : string */
-Freja._aux.transformXSL = function(xml, xsl) {
+Freja._aux.transformXSL = function(xml, xsl, xslParameters) {
 	if (xml.transformNode) {
 		return xml.transformNode(xsl);
 	};
 	var processor = new XSLTProcessor();
 	processor.importStylesheet(xsl);
+	for(var paramName in xslParameters) {
+		processor.setParameter(null, paramName,xslParameters[paramName]); 
+	}
 	return Freja._aux.serializeXML(processor.transformToDocument(xml));
 
 };
@@ -515,7 +537,7 @@ Freja.Model.prototype.updateFrom = function(view) {
   */
 Freja.Model.prototype.save = function() {
 	var url = this.url;
-	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
+	var match = /^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
 	if (match) {
 		url = match[1] + url; // local
 	}
@@ -538,7 +560,7 @@ Freja.Model.prototype.save = function() {
   */
 Freja.Model.prototype.remove = function() {
 	var url = this.url;
-	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
+	var match = /^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
 	if (match) {
 		url = match[1] + url; // local
 	}
@@ -578,7 +600,7 @@ Freja.Model.DataSource.prototype.select = function() {
   */
 Freja.Model.DataSource.prototype.create = function(values) {
 	var url = this.createURL;
-	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
+	var match = /^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
 	if (match) {
 		url = match[1] + url; // local
 	}
@@ -610,7 +632,7 @@ Freja.View = function(url, renderer) {
   *                                      default placeholder.
   * @returns MochiKit.Async.Deferred
   */
-Freja.View.prototype.render = function(model, placeholder) {
+Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 	if (typeof(placeholder) == "undefined") placeholder = this.placeholder;
 
 	var Handler = function(model, view, deferred) {
@@ -620,6 +642,7 @@ Freja.View.prototype.render = function(model, placeholder) {
 	};
 
 	Handler.prototype.trigger = function() {
+	
 		try {
 			if (!this.view.ready) {
 				Freja._aux.connect(this.view, "onload", Freja._aux.bind(this.trigger, this));
@@ -639,14 +662,14 @@ Freja.View.prototype.render = function(model, placeholder) {
 				// wrap pojo's in
 				model = { document : Freja._aux.loadXML("<?xml version='1.0' ?>\n" + Freja._aux.xmlize(this.model, "item")) };
 			}
-			var trans = this.view._renderer.transform(model, this.view);
+			var trans = this.view._renderer.transform(model, this.view, xslParameters);
 			trans.addCallback(Freja._aux.bind(function(html) {
 				this._destination.innerHTML = html;
 			}, this.view));
 			trans.addCallback(Freja._aux.bind(function() {
 				Freja._aux.signal(this, "onrendercomplete", this._destination)
 			}, this.view));
-			trans.addCallback(this.deferred.callback);
+			//trans.addCallback(this.deferred.callback);
 			trans.addErrback(this.deferred.errback);
 		} catch (ex) {
 			this.deferred.errback(ex);
@@ -675,6 +698,7 @@ Freja.View.prototype.render = function(model, placeholder) {
 Freja.View.prototype._connectBehaviour = function(destination) {
 	try {
 		var connectCallback = function(node, eventType, callback) {
+		
 			Freja._aux.connect(node, eventType, Freja._aux.bind(
 				function(e) {
 					var allow = false;
@@ -691,11 +715,12 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 			);
 		};
 		var applyHandlers = function(node, handlers) {
+			
 			for (var i = 0, c = node.childNodes, l = c.length; i < l; ++i) {
 				var child = c[i];
 				if (child.nodeType == 1) {
-					var id = child.getAttribute("handler");
-					if (id != "") {
+					var id = child.getAttribute("id");
+					if (id != "") {				
 						var handler = handlers[id];
 						if (handler) {
 							for (var eventType in handler) {
@@ -711,7 +736,14 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 				}
 			}
 		};
-		applyHandlers(destination, this.handlers);
+		
+		// Avoid traversing the DOM tree if there's no handler to process.
+		// @note: is there a better way? this.handlers.length is always 0.
+		for (var ids in this.handlers) {
+			applyHandlers(destination, this.handlers);
+			break;
+		}	
+		
 	} catch (ex) {
 		alert(ex.message);
 	}
@@ -734,10 +766,10 @@ Freja.Class.extend(Freja.View.Renderer.XSLTransformer, Freja.View.Renderer);
 /**
   * @returns MochiKit.Async.Deferred
   */
-Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view) {
+Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();
         try {
-		var html = Freja._aux.transformXSL(model.document, view.document);
+		var html = Freja._aux.transformXSL(model.document, view.document, xslParameters);
 		if (!html) {
 			d.errback(new Error("XSL Transformation error."));
 		} else {
@@ -763,14 +795,14 @@ Freja.Class.extend(Freja.View.Renderer.RemoteXSLTransformer, Freja.View.Renderer
 /**
   * @returns MochiKit.Async.Deferred
   */
-Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, view) {
+Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();
 
 	// prepare posted data  (no need to send the XSL document, just its url)
 	var xslUrl = view.url;
 	var postedData = "xslFile=" + encodeURIComponent(xslUrl) + "&xmlData=" + encodeURIComponent(Freja._aux.serializeXML(model.document));
-//	if (xslParams)
-//		postedData  = postedData + "&xslParam=" + encodeURIComponent(xslParams.toString());
+	if (xslParameters)
+		postedData  = postedData + "&xslParam=" + encodeURIComponent(xslParameters.toString());
 	// send request to the server-side XSL transformation service
 	var req = Freja.AssetManager.openXMLHttpRequest("POST", Freja.AssetManager.XSLT_SERVICE_URL);
 	req.onreadystatechange = function() {
@@ -991,7 +1023,7 @@ Freja.AssetManager.setCredentials = function(username, password) {
   * @returns MochiKit.Async.Deferred
   */
 Freja.AssetManager.loadAsset = function(url, preventCaching) {
-	var match = /^(file:\/\/.*\/)([^/]*)$/.exec(window.location.href);
+	var match = /^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
 	if (match) {
 		url = match[1] + url; // local
 	}
