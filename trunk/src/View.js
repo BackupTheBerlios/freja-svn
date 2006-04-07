@@ -20,13 +20,14 @@ Freja.View = function(url, renderer) {
   */
 Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 	if (typeof(placeholder) == "undefined") placeholder = this.placeholder;
+	if (typeof(xslParameters) == "undefined") xslParameters = this.xslParameters;
 
-	var Handler = function(model, view, deferred) {
+	var Handler = function(model, view, deferred, xslParameters) {
 		this.model = model;
 		this.view = view;
 		this.deferred = deferred;
+		this.xslParameters = xslParameters;
 	};
-
 	Handler.prototype.trigger = function() {
 		try {
 			if (!this.view.ready) {
@@ -47,14 +48,15 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 				// wrap pojo's in
 				model = { document : Freja._aux.loadXML("<?xml version='1.0' ?>\n" + Freja._aux.xmlize(this.model, "item")) };
 			}
-			var trans = this.view._renderer.transform(model, this.view, xslParameters);
+			
+			var trans = this.view._renderer.transform(model, this.view, this.xslParameters);
 			trans.addCallback(Freja._aux.bind(function(html) {									
 				this._destination.innerHTML = html;				
 			}, this.view));
 			trans.addCallback(Freja._aux.bind(function() {
 				Freja._aux.signal(this, "onrendercomplete", this._destination)
 			}, this.view));
-			//trans.addCallback(this.deferred.callback);
+			trans.addCallback(this.deferred.callback);
 			trans.addErrback(this.deferred.errback);
 		} catch (ex) {
 			this.deferred.errback(ex);
@@ -68,7 +70,7 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 		// Perhaps we should leave it to the programmer to do this.
 		this._destination.innerHTML = Freja.AssetManager.THROBBER_HTML;
 
-		var h = new Handler(model, this, d);
+		var h = new Handler(model, this, d, xslParameters);
 		h.trigger();
 	} catch (ex) {
 		d.errback(ex);
