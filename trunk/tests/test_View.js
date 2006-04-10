@@ -15,8 +15,9 @@ tests.test_View = function (t) {
 	var out = document.createElement("DIV");
 	view.render(model, out);
 
-	t.is(out.getElementsByTagName("H3").length, 1);
-	t.is(out.getElementsByTagName("H3").item(0).firstChild.nodeValue, model.get("item/name"), "Rendered view should contain the models value");
+//	alert(out.innerHTML);
+	t.is(out.getElementsByTagName("H3").length, 1, "The rendered view should contain 1 H3 tag");
+	t.is(out.getElementsByTagName("H3").item(0).firstChild.nodeValue, model.get("item/name"), "Rendered view should contain the model's value");
 
 	// test of pojo model
 	Freja.AssetManager.clearCache();

@@ -48,10 +48,10 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 				// wrap pojo's in
 				model = { document : Freja._aux.loadXML("<?xml version='1.0' ?>\n" + Freja._aux.xmlize(this.model, "item")) };
 			}
-			
+
 			var trans = this.view._renderer.transform(model, this.view, this.xslParameters);
-			trans.addCallback(Freja._aux.bind(function(html) {									
-				this._destination.innerHTML = html;				
+			trans.addCallback(Freja._aux.bind(function(html) {
+				this._destination.innerHTML = html;
 			}, this.view));
 			trans.addCallback(Freja._aux.bind(function() {
 				Freja._aux.signal(this, "onrendercomplete", this._destination)
@@ -85,7 +85,7 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 Freja.View.prototype._connectBehaviour = function(destination) {
 	try {
 		var connectCallback = function(node, eventType, callback) {
-		
+
 			Freja._aux.connect(node, eventType, Freja._aux.bind(
 				function(e) {
 					var allow = false;
@@ -102,12 +102,12 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 			);
 		};
 		var applyHandlers = function(node, handlers) {
-			
+
 			for (var i = 0, c = node.childNodes, l = c.length; i < l; ++i) {
 				var child = c[i];
 				if (child.nodeType == 1) {
-					var id = child.getAttribute("id");
-					if (id != "") {				
+					var id = child.getAttribute("freja:behaviour");
+					if (id != "") {
 						var handler = handlers[id];
 						if (handler) {
 							for (var eventType in handler) {
@@ -123,14 +123,14 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 				}
 			}
 		};
-		
+
 		// Avoid traversing the DOM tree if there's no handler to process.
 		// @note: is there a better way? this.handlers.length is always 0.
 		for (var ids in this.handlers) {
 			applyHandlers(destination, this.handlers);
 			break;
-		}	
-		
+		}
+
 	} catch (ex) {
 		alert(ex.message);
 	}

@@ -4,6 +4,8 @@ if (typeof(tests) == 'undefined') { tests = {}; }
 
 tests.test_Model = function (t) {
 	// test of SimplePath (XPath query replacement)
+	t.ok(typeof(Freja) == "object");
+
 	var q = new Freja.QueryEngine.SimplePath();
 	var doc = document.createElement("DIV");
 	var span = document.createElement("SPAN");

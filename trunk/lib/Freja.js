@@ -2,7 +2,7 @@
 
     Freja 2.0.alpha
 
-    Build $Thu, 6 Apr 2006 02:50:39 UTC$
+    Build $Mon, 10 Apr 2006 01:00:19 UTC$
 
     Target: minimal
 
@@ -85,7 +85,7 @@ Freja._aux.formContents = function(elem) {
 	if (!elem) v = document;
 	var names = [];
 	var values = [];
-	var inputs = elem.getElementsByTagNames("INPUT");
+	var inputs = elem.getElementsByTagName("INPUT");
 	for (var i = 0; i < inputs.length; ++i) {
 		var input = inputs[i];
 		if (input.name) {
@@ -100,7 +100,7 @@ Freja._aux.formContents = function(elem) {
 			}
 		}
 	}
-	var textareas = elem.getElementsByTagNames("TEXTAREA");
+	var textareas = elem.getElementsByTagName("TEXTAREA");
 	for (var i = 0; i < textareas.length; ++i) {
 		var input = textareas[i];
 		if (input.name) {
@@ -108,7 +108,7 @@ Freja._aux.formContents = function(elem) {
 			values.push(input.value);
 		}
 	}
-	var selects = elem.getElementsByTagNames("SELECT");
+	var selects = elem.getElementsByTagName("SELECT");
 	for (var i = 0; i < selects.length; ++i) {
 		var input = textareas[i];
 		if (input.name) {
@@ -330,13 +330,14 @@ Freja._aux.Deferred = function() {
 	this._pending = null;
 };
 Freja._aux.Deferred.prototype.callback = function() {
-	if (this._good.length == 0) {
+	if (this._good.length == 0) {	
 		this._pending = [this.callback, arguments];
 		return;
 	}
 	for (var i=0; i < this._good.length; i++) {
-		this._good[i].apply(window, arguments);
+		this._good[i].apply(window, arguments);		
 	}
+	this._good = [];
 };
 Freja._aux.Deferred.prototype.errback = function() {
 	if (this._bad.length == 0) {
@@ -346,11 +347,11 @@ Freja._aux.Deferred.prototype.errback = function() {
 	for (var i=0; i < this._bad.length; i++) {
 		this._bad[i].apply(window, arguments);
 	}
+	this._bad = [];
 };
 Freja._aux.Deferred.prototype.addCallbacks = function(fncOK, fncError) {
 	if (fncOK) this._good[this._good.length] = fncOK;
 	if (fncError) this._bad[this._bad.length] = fncError;
-
 	if (this._pending) {
 		this._pending[0].apply(this, this._pending[1]);
 	}
@@ -359,16 +360,21 @@ Freja._aux.Deferred.prototype.addCallback = function(fncOK) {
 	this.addCallbacks(fncOK);
 };
 Freja._aux.Deferred.prototype.addErrback = function(fncError) {
-	this.addCallbacks(null, fncOK);
+	this.addCallbacks(null, fncError);
 };
 if (document.implementation && document.implementation.hasFeature("XPath", "3.0")) {
 	XMLDocument.prototype.selectNodes = function(sExpr, contextNode) {
 		var nsDoc = this;
 		var nsresolver = this.createNSResolver(this.documentElement);
-		var oResult = this.evaluate(sExpr,
-			(contextNode ? contextNode : this),
-			nsresolver,
-			XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+		
+		try {
+			var oResult = this.evaluate(sExpr,
+				(contextNode ? contextNode : this),
+				nsresolver,
+				XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+		} catch(e) {
+			throw new Error("Can't evaluate expression " + sExpr);
+		}
 		var nodeList = new Array(oResult.snapshotLength);
 		nodeList.item = function(i) {
 			return (i < 0 || i >= this.length) ? null : this[i];
@@ -421,10 +427,15 @@ Freja.QueryEngine.prototype.getElementById = function(document, id) {
 	}
 };
 Freja.QueryEngine.prototype.get = function(document, expression) {
-	return this._find(document, expression).nodeValue;
+	var node = this._find(document, expression);
+	if(node) return node.nodeValue;
+	return null;
 };
 Freja.QueryEngine.prototype.set = function(document, expression, value) {
-	this._find(document, expression).nodeValue = value;
+	var node = this._find(document, expression);	
+	if(node) {
+		node.nodeValue = value;
+	}
 };
 /**
   * XPath query engine.
@@ -439,8 +450,15 @@ Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 		return node.firstChild;
 	} else if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
+	} else if (node && !node.firstChild) {
+		// this is an empty node <tag />. When using 'get' it's fine to return null,
+		// but for 'set', we need to create a textnode somewhere.
+		// for lack of better idea, will do it here.
+		var n = document.createTextNode('');
+		return node.appendChild(n);
 	}
-	throw new Error("Can't evaluate expression " + expression);
+//	throw new Error("Can't evaluate expression " + expression);
+	return null;
 };
 /**
   * SimplePath
@@ -634,15 +652,15 @@ Freja.View = function(url, renderer) {
   */
 Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 	if (typeof(placeholder) == "undefined") placeholder = this.placeholder;
+	if (typeof(xslParameters) == "undefined") xslParameters = this.xslParameters;
 
-	var Handler = function(model, view, deferred) {
+	var Handler = function(model, view, deferred, xslParameters) {
 		this.model = model;
 		this.view = view;
 		this.deferred = deferred;
+		this.xslParameters = xslParameters;
 	};
-
 	Handler.prototype.trigger = function() {
-	
 		try {
 			if (!this.view.ready) {
 				Freja._aux.connect(this.view, "onload", Freja._aux.bind(this.trigger, this));
@@ -662,14 +680,15 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 				// wrap pojo's in
 				model = { document : Freja._aux.loadXML("<?xml version='1.0' ?>\n" + Freja._aux.xmlize(this.model, "item")) };
 			}
-			var trans = this.view._renderer.transform(model, this.view, xslParameters);
+
+			var trans = this.view._renderer.transform(model, this.view, this.xslParameters);
 			trans.addCallback(Freja._aux.bind(function(html) {
 				this._destination.innerHTML = html;
 			}, this.view));
 			trans.addCallback(Freja._aux.bind(function() {
 				Freja._aux.signal(this, "onrendercomplete", this._destination)
 			}, this.view));
-			//trans.addCallback(this.deferred.callback);
+			trans.addCallback(this.deferred.callback);
 			trans.addErrback(this.deferred.errback);
 		} catch (ex) {
 			this.deferred.errback(ex);
@@ -683,7 +702,7 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 		// Perhaps we should leave it to the programmer to do this.
 		this._destination.innerHTML = Freja.AssetManager.THROBBER_HTML;
 
-		var h = new Handler(model, this, d);
+		var h = new Handler(model, this, d, xslParameters);
 		h.trigger();
 	} catch (ex) {
 		d.errback(ex);
@@ -698,7 +717,7 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 Freja.View.prototype._connectBehaviour = function(destination) {
 	try {
 		var connectCallback = function(node, eventType, callback) {
-		
+
 			Freja._aux.connect(node, eventType, Freja._aux.bind(
 				function(e) {
 					var allow = false;
@@ -715,12 +734,12 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 			);
 		};
 		var applyHandlers = function(node, handlers) {
-			
+
 			for (var i = 0, c = node.childNodes, l = c.length; i < l; ++i) {
 				var child = c[i];
 				if (child.nodeType == 1) {
-					var id = child.getAttribute("id");
-					if (id != "") {				
+					var id = child.getAttribute("freja:behaviour");
+					if (id != "") {
 						var handler = handlers[id];
 						if (handler) {
 							for (var eventType in handler) {
@@ -736,14 +755,14 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 				}
 			}
 		};
-		
+
 		// Avoid traversing the DOM tree if there's no handler to process.
 		// @note: is there a better way? this.handlers.length is always 0.
 		for (var ids in this.handlers) {
 			applyHandlers(destination, this.handlers);
 			break;
-		}	
-		
+		}
+
 	} catch (ex) {
 		alert(ex.message);
 	}
@@ -752,7 +771,7 @@ Freja.View.prototype._connectBehaviour = function(destination) {
   * Returns the values of a formview
   */
 Freja.View.prototype.getValues = function() {
-	return formContents(this._destination);
+	return Freja._aux.formContents(this._destination);
 };
 /**
   * Base object for viewrenderers
@@ -776,7 +795,10 @@ Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, x
 			// fix empty textareas
 			// Can't this be fixed by outputting as html rather than xml ?
 			// <xsl:output method="html" />
-			html = html.replace(/<textarea([^\/>]*)\/>/gi,"<textarea $1></textarea>");
+			// (cedsav) don't remember all the details but method="xml" is the way to go.
+			// method="html" would output html not xhtml, plus I think it implies that
+			// you want to output a valid html document (with html, head and body tags).
+			html = html.replace(/<textarea([^>]*)\/>/gi,"<textarea $1></textarea>");
 			d.callback(html);
 		}
 	} catch (ex) {
