@@ -2,7 +2,7 @@
 
     Freja 2.0.alpha
 
-    Build $Mon, 10 Apr 2006 01:00:19 UTC$
+    Build $Mon, 10 Apr 2006 13:58:21 UTC$
 
     Target: minimal
 
@@ -65,7 +65,7 @@ Freja._aux.bind = function(func, self) {
 	if(typeof (func)=="string"){
 		func=self[func];
 	}
-		
+
 	var im_func = null;
     if (typeof(func.im_func) == 'function') {
         im_func = func.im_func;
@@ -78,7 +78,7 @@ Freja._aux.bind = function(func, self) {
     func.im_func = im_func;
     func.im_self = self;
 	return func;
-	
+
 };
 /** formContents(elem) : Array */
 Freja._aux.formContents = function(elem) {
@@ -172,7 +172,7 @@ Freja._aux.connect = function(src, signal, fnc) {
 };
 /** signal(src, signal, ...) : void */
 Freja._aux.signal = function(src, signal) {
-	
+
 	try {
 		var sigs = src._signals[signal];
 		var args = [];
@@ -180,7 +180,7 @@ Freja._aux.signal = function(src, signal) {
 			args.push(arguments[i]);
 		}
 		for (var i=0; i < sigs.length; i++) {
-			try {							
+			try {
 				sigs[i].apply(src, args);
 			} catch (e) { /* squelch */ }
 		}
@@ -269,13 +269,13 @@ Freja._aux.loadXML = function(text) {
 };
 /** transformXSL(XMLDocument, XSLDocument) : string */
 Freja._aux.transformXSL = function(xml, xsl, xslParameters) {
-	if (xml.transformNode) {
+	if (typeof(xml.transformNode) != "undefined") {
 		return xml.transformNode(xsl);
 	};
 	var processor = new XSLTProcessor();
 	processor.importStylesheet(xsl);
-	for(var paramName in xslParameters) {
-		processor.setParameter(null, paramName,xslParameters[paramName]); 
+	for (var paramName in xslParameters) {
+		processor.setParameter(null, paramName, xslParameters[paramName]);
 	}
 	return Freja._aux.serializeXML(processor.transformToDocument(xml));
 
@@ -330,12 +330,12 @@ Freja._aux.Deferred = function() {
 	this._pending = null;
 };
 Freja._aux.Deferred.prototype.callback = function() {
-	if (this._good.length == 0) {	
+	if (this._good.length == 0) {
 		this._pending = [this.callback, arguments];
 		return;
 	}
 	for (var i=0; i < this._good.length; i++) {
-		this._good[i].apply(window, arguments);		
+		this._good[i].apply(window, arguments);
 	}
 	this._good = [];
 };
@@ -366,7 +366,7 @@ if (document.implementation && document.implementation.hasFeature("XPath", "3.0"
 	XMLDocument.prototype.selectNodes = function(sExpr, contextNode) {
 		var nsDoc = this;
 		var nsresolver = this.createNSResolver(this.documentElement);
-		
+
 		try {
 			var oResult = this.evaluate(sExpr,
 				(contextNode ? contextNode : this),
@@ -738,7 +738,7 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 			for (var i = 0, c = node.childNodes, l = c.length; i < l; ++i) {
 				var child = c[i];
 				if (child.nodeType == 1) {
-					var id = child.getAttribute("freja:behaviour");
+					var id = child.getAttribute("freja-behaviour");
 					if (id != "") {
 						var handler = handlers[id];
 						if (handler) {

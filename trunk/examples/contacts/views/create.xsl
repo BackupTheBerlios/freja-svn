@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0"
-	xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-	xmlns:freja="http://formassembly.com/freja"
->
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
 <xsl:template match="/">
-	<form method="post" action="#" freja:behaviour="form">
+	<form method="post" action="#" freja-behaviour="form">
 		<p>email:<input name="email" type="text" value="" /></p>
 		<p>first_name:<input name="first_name" type="text" value="" /></p>
 		<p>surname:<input name="surname" type="text" value="" /></p>
 		<p>
-			<input type="button" value="cancel" freja:behaviour="cancel" />
+			<input type="button" value="cancel" freja-behaviour="cancel" />
 			<input type="submit" value="ok" />
 		</p>
 	</form>

@@ -106,7 +106,7 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 			for (var i = 0, c = node.childNodes, l = c.length; i < l; ++i) {
 				var child = c[i];
 				if (child.nodeType == 1) {
-					var id = child.getAttribute("freja:behaviour");
+					var id = child.getAttribute("freja-behaviour");
 					if (id != "") {
 						var handler = handlers[id];
 						if (handler) {
