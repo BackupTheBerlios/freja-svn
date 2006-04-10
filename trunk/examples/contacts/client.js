@@ -5,12 +5,12 @@ Freja.AssetManager.XSLT_SERVICE_URL = "../../external/srvc-xslt.php?path=example
 // view : index
 var index = getView("views/index.xsl");
 index.placeholder = "content";
-index.handlers["edit"] = {
+index.behaviours["edit"] = {
 	onclick : function(node) {
 		edit.render(getModel(node.getAttribute('url')));
 	}
 };
-index.handlers["delete"] = {
+index.behaviours["delete"] = {
 	onclick : function(node) {
 		if (!confirm("Really delete it?")) {
 			return;
@@ -24,7 +24,7 @@ index.handlers["delete"] = {
 		});
 	}
 };
-index.handlers["create"] = {
+index.behaviours["create"] = {
 	onclick : function(node) {
 		create.render();
 	}
@@ -33,7 +33,7 @@ index.handlers["create"] = {
 // view : create
 var create = getView("views/create.xsl");
 create.placeholder = "content";
-create.handlers["form"] = {
+create.behaviours["form"] = {
 	onsubmit : function(node) {
 		var d = contacts.create(getView("views/create.xsl").getValues());
 		d.addCallback(function() {
@@ -44,7 +44,7 @@ create.handlers["form"] = {
 		index.render(contacts.select());
 	}
 };
-create.handlers["cancel"] = {
+create.behaviours["cancel"] = {
 	onclick : function() {
 		index.render(contacts.select());
 	}
@@ -53,7 +53,7 @@ create.handlers["cancel"] = {
 // view : edit
 var edit = getView("views/edit.xsl");
 edit.placeholder = "content";
-edit.handlers["form"] = {
+edit.behaviours["form"] = {
 	onsubmit : function(node) {
 		try {
 			var model = getModel(node.getAttribute('url'));
@@ -70,7 +70,7 @@ edit.handlers["form"] = {
 		}
 	}
 };
-edit.handlers["cancel"] = {
+edit.behaviours["cancel"] = {
 	onclick : function() {
 		index.render(contacts.select());
 	}

@@ -2,7 +2,7 @@ var data = getModel("models/data.xml");
 
 var display = getView("views/display.xsl");
 display.placeholder = "content";
-display.handlers["editLink"] = {
+display.behaviours["editLink"] = {
 	onclick : function() {
 		edit.render(data);
 	}
@@ -10,7 +10,7 @@ display.handlers["editLink"] = {
 
 var edit = getView("views/edit.xsl");
 edit.placeholder = "content";
-edit.handlers["editForm"] = {
+edit.behaviours["editForm"] = {
 	onsubmit : function() {
 		try {
 			data.updateFrom(edit);
@@ -20,7 +20,7 @@ edit.handlers["editForm"] = {
 		}
 	}
 };
-edit.handlers["displayLink"] = {
+edit.behaviours["displayLink"] = {
 	onclick : function() {
 		display.render(data);
 	}

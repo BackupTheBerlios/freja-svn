@@ -7,7 +7,7 @@ Freja.View = function(url, renderer) {
 	this.document = null;
 	this._renderer = renderer;
 	this._destination = null;
-	this.handlers = [];
+	this.behaviours = [];
 	this.placeholder = null;
 	Freja._aux.registerSignals(this, ["onload","onrendercomplete"]);
 	Freja._aux.connect(this, "onrendercomplete", Freja._aux.bind(this._connectBehaviour, this));
@@ -80,7 +80,7 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 /**
   * Decorates the output of the primary renderer, to inject behaviour.
   * @note Maybe we could use cssQuery (http://dean.edwards.name/my/cssQuery/)
-  *       to identify targets for behaviour, rather than just the id-attribute.
+  *       to identify targets for behaviour
   */
 Freja.View.prototype._connectBehaviour = function(destination) {
 	try {
@@ -101,14 +101,14 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 				}, node)
 			);
 		};
-		var applyHandlers = function(node, handlers) {
+		var applyHandlers = function(node, behaviours) {
 
 			for (var i = 0, c = node.childNodes, l = c.length; i < l; ++i) {
 				var child = c[i];
 				if (child.nodeType == 1) {
 					var id = child.getAttribute("freja-behaviour");
 					if (id != "") {
-						var handler = handlers[id];
+						var handler = behaviours[id];
 						if (handler) {
 							for (var eventType in handler) {
 								if (eventType == "init") {
@@ -119,15 +119,16 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 							}
 						}
 					}
-					applyHandlers(child, handlers);
+					applyHandlers(child, behaviours);
 				}
 			}
 		};
 
 		// Avoid traversing the DOM tree if there's no handler to process.
-		// @note: is there a better way? this.handlers.length is always 0.
-		for (var ids in this.handlers) {
-			applyHandlers(destination, this.handlers);
+		// @note: is there a better way? this.behaviours.length is always 0.
+		// @note  This is fine. behaviours is a hashmap, not an array.
+		for (var ids in this.behaviours) {
+			applyHandlers(destination, this.behaviours);
 			break;
 		}
 
