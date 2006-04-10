@@ -61,7 +61,7 @@ Freja._aux.formContents = function(elem) {
 	}
 	var selects = elem.getElementsByTagName("SELECT");
 	for (var i = 0; i < selects.length; ++i) {
-		var input = textareas[i];
+		var input = selects[i];
 		if (input.name) {
 			if (input.selectedIndex >= 0) {
 				var opt = input.options[input.selectedIndex];
