@@ -220,9 +220,28 @@ Freja._aux.loadXML = function(text) {
 };
 /** transformXSL(XMLDocument, XSLDocument) : string */
 Freja._aux.transformXSL = function(xml, xsl, xslParameters) {
-	if (typeof(xml.transformNode) != "undefined") {
+	if (typeof(xml.transformNode) != "undefined") {	
+		// set the parameters		
+		for (var paramName in xslParameters) {
+			try {
+			xsl.setProperty ("SelectionNamespaces", "xmlns:xsl='http://www.w3.org/1999/XSL/Transform'");			
+			var paramNode = xsl.selectSingleNode("//xsl:param[@name='"+ paramName +"']");					
+			paramNode.appendChild(xsl.createTextNode(xslParameters[paramName]));
+			} catch(x) {
+				throw(x.message);
+			}			
+		}		
 		return xml.transformNode(xsl);
+
+		// clean the stylesheet.
+		for (var paramName in xslParameters) {
+			var paramNode = xsl.selectSingleNode("//xsl:param[@name='"+ paramName +"']");
+			while(paramNode.firstChild) {
+				paramNode.removeChild(paramNode.firstChild);
+			}
+		}
 	};
+
 	var processor = new XSLTProcessor();
 	processor.importStylesheet(xsl);
 	for (var paramName in xslParameters) {
@@ -363,3 +382,66 @@ if (document.implementation && document.implementation.hasFeature("XPath", "3.0"
 		}
 	};
 };
+
+// Adapated From Sarissa
+// * @version 0.9.6.1
+// * @author: Manos Batsis, mailto: mbatsis at users full stop sourceforge full stop net
+
+Freja._aux.pickRecentProgID = function(idList) {
+    var bFound = false;
+    for(var i=0; i < idList.length && !bFound; i++){
+        try{
+            var oDoc = new ActiveXObject(idList[i]);
+            return idList[i];
+        } catch (objException){ // trap; try next progID
+        };
+    };
+    throw "Could not retrieve a valid progID.";
+}
+
+if(typeof XSLTProcessor == 'undefined' && typeof ActiveXObject  != 'undefined') {
+alert('ok');
+    _SARISSA_DOM_PROGID = Freja._aux.pickRecentProgID(["Msxml2.DOMDocument.5.0", "Msxml2.DOMDocument.4.0", "Msxml2.DOMDocument.3.0", "MSXML2.DOMDocument", "MSXML.DOMDocument", "Microsoft.XMLDOM"]);
+    _SARISSA_XMLHTTP_PROGID = Freja._aux.pickRecentProgID(["Msxml2.XMLHTTP.5.0", "Msxml2.XMLHTTP.4.0", "MSXML2.XMLHTTP.3.0", "MSXML2.XMLHTTP", "Microsoft.XMLHTTP"]);
+    _SARISSA_THREADEDDOM_PROGID = Freja._aux.pickRecentProgID(["Msxml2.FreeThreadedDOMDocument.5.0", "MSXML2.FreeThreadedDOMDocument.4.0", "MSXML2.FreeThreadedDOMDocument.3.0"]);
+    _SARISSA_XSLTEMPLATE_PROGID = Freja._aux.pickRecentProgID(["Msxml2.XSLTemplate.5.0", "Msxml2.XSLTemplate.4.0", "MSXML2.XSLTemplate.3.0"]);
+
+	XSLTProcessor = function(){
+	    this.template = new ActiveXObject(_SARISSA_XSLTEMPLATE_PROGID);
+	    this.processor = null;
+	};
+
+	XSLTProcessor.prototype.importStylesheet = function(xslDoc){
+	    // convert stylesheet to free threaded
+	    var converted = new ActiveXObject(_SARISSA_THREADEDDOM_PROGID);
+	    converted.loadXML(xslDoc.xml);
+	    this.template.stylesheet = converted;
+	    this.processor = this.template.createProcessor();
+	    // (re)set default param values
+	    this.paramsSet = new Array();
+	};
+
+	XSLTProcessor.prototype.transformToDocument = function(sourceDoc){
+	    this.processor.input = sourceDoc;
+	    var outDoc = new ActiveXObject(_SARISSA_DOM_PROGID);
+	    this.processor.output = outDoc;
+	    this.processor.transform();
+	    return outDoc;
+	};
+
+	XSLTProcessor.prototype.setParameter = function(nsURI, name, value){
+	    /* nsURI is optional but cannot be null */
+	    if(nsURI){
+	        this.processor.addParameter(name, value, nsURI);
+	    }else{
+	        this.processor.addParameter(name, value);
+	    };
+	    /* update updated params for getParameter */
+	    if(!this.paramsSet[""+nsURI]){
+	        this.paramsSet[""+nsURI] = new Array();
+	    };
+	    this.paramsSet[""+nsURI][name] = value;
+	};
+
+}
+
