@@ -223,15 +223,12 @@ Freja._aux.transformXSL = function(xml, xsl, xslParameters) {
 	if (typeof(xml.transformNode) != "undefined") {	
 		// set the parameters		
 		for (var paramName in xslParameters) {
-			try {
 			xsl.setProperty ("SelectionNamespaces", "xmlns:xsl='http://www.w3.org/1999/XSL/Transform'");			
 			var paramNode = xsl.selectSingleNode("//xsl:param[@name='"+ paramName +"']");					
 			paramNode.appendChild(xsl.createTextNode(xslParameters[paramName]));
-			} catch(x) {
-				throw(x.message);
-			}			
+			// @TODO: check if we have the 'select' attribute and remove it.
 		}		
-		return xml.transformNode(xsl);
+		var result = xml.transformNode(xsl);
 
 		// clean the stylesheet.
 		for (var paramName in xslParameters) {
@@ -240,6 +237,7 @@ Freja._aux.transformXSL = function(xml, xsl, xslParameters) {
 				paramNode.removeChild(paramNode.firstChild);
 			}
 		}
+		return result;
 	};
 
 	var processor = new XSLTProcessor();
