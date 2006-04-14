@@ -212,22 +212,23 @@ Freja._aux.serializeXML = function(node) {
 /** loadXML(string) : XMLDocument */
 Freja._aux.loadXML = function(text) {
 	if (window.ActiveXObject) {
-		var xmlDoc = new ActiveXObject("Msxml2.DOMDocument.4.0");
+		var xmlDoc = new ActiveXObject("Msxml2.DOMDocument");
 		xmlDoc.loadXML(text);
+		xmlDoc.setProperty("SelectionLanguage", "XPath");
 		return xmlDoc;
 	}
 	return (new DOMParser()).parseFromString(text, "text/xml");
 };
 /** transformXSL(XMLDocument, XSLDocument) : string */
 Freja._aux.transformXSL = function(xml, xsl, xslParameters) {
-	if (typeof(xml.transformNode) != "undefined") {	
-		// set the parameters		
+	if (typeof(xml.transformNode) != "undefined") {
+		// set the parameters
 		for (var paramName in xslParameters) {
-			xsl.setProperty ("SelectionNamespaces", "xmlns:xsl='http://www.w3.org/1999/XSL/Transform'");			
-			var paramNode = xsl.selectSingleNode("//xsl:param[@name='"+ paramName +"']");					
+			xsl.setProperty ("SelectionNamespaces", "xmlns:xsl='http://www.w3.org/1999/XSL/Transform'");
+			var paramNode = xsl.selectSingleNode("//xsl:param[@name='"+ paramName +"']");
 			paramNode.appendChild(xsl.createTextNode(xslParameters[paramName]));
 			// @TODO: check if we have the 'select' attribute and remove it.
-		}		
+		}
 		var result = xml.transformNode(xsl);
 
 		// clean the stylesheet.
