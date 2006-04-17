@@ -69,7 +69,7 @@ Freja._aux.formContents = function(elem) {
 			if (input.selectedIndex >= 0) {
 				var opt = input.options[input.selectedIndex];
 				names.push(input.name);
-				values.push((opt.value) ? opt.value : opt.text);
+				values.push((opt.value) ? opt.value : "");
 			}
 		}
 	}
