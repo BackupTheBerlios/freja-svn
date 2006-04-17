@@ -9,8 +9,9 @@
 		}
 		error_log($errstr."\n", 3, $filename);
 		header("HTTP/1.0 500 Internal Error");
-		header('Content-Type: text/xml');
-		echo "<?xml version='1.0' ?><error>".$errstr."</error>";
+		//header('Content-Type: text/xml');
+		/*echo "<?xml version='1.0' ?><error>".$errstr."</error>";*/
+		echo "Error: ".$errstr;
 		exit;
 	}
 	function exception_handler($ex) {

@@ -141,13 +141,15 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 		d.callback(document);
 	};
 	try {
-		if (preventCaching && Freja.AssetManager.HTTP_METHOD_TUNNEL) {
+		/* Why using HTTP_METHOD_TUNNEL for a GET? 
+		  if (preventCaching && Freja.AssetManager.HTTP_METHOD_TUNNEL) {
 			var req = Freja._aux.openXMLHttpRequest("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async", Freja.AssetManager._username, Freja.AssetManager._password);
 			req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, "GET");
 			req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 		} else {
+		*/
 			var req = Freja._aux.openXMLHttpRequest("GET", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async", Freja.AssetManager._username, Freja.AssetManager._password);
-		}
+		/*}*/
 
 		// This shouldn't be nescesary, but alas it is - firefox chokes
 		// It's probably due to an error in MochiKit, so the problem

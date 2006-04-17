@@ -44,6 +44,9 @@ Freja._aux.formContents = function(elem) {
 				if (input.checked) {
 					names.push(input.name);
 					values.push(input.value);
+				} else {
+					names.push(input.name);
+					values.push("");
 				}
 			} else {
 				names.push(input.name);
