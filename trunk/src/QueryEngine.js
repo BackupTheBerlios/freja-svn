@@ -21,6 +21,30 @@ Freja.QueryEngine.prototype.set = function(document, expression, value) {
 	var node = this._find(document, expression);	
 	if(node) {
 		node.nodeValue = value;
+	} else {
+		// text node not found. Might need to be created.
+		// try not to process field names that are not meant to be xpath expressions  
+		if(expression.lastIndexOf('/') != -1) {		 	
+			var nodeName = expression.substr(expression.lastIndexOf('/')+1);
+			
+			if(nodeName.charAt(0)=='@') {
+				// trying to set a non-existing attribute. Let's create it.
+				var newexpression =  expression.substring(0, expression.lastIndexOf('/'));
+				var node = document.selectSingleNode(newexpression);
+				if(node) 
+					node.setAttribute(nodeName.substr(1),value);
+			} else {
+				// this could be an empty node (<tag />)
+				// let's try to create the text node.
+				var node = document.selectSingleNode(expression);
+				if(node) {
+					var n = document.createTextNode(value);
+					node.appendChild(n);							
+				} else {
+					// the element does not exist.
+				}
+			}
+		}
 	}
 };
 /**
@@ -36,13 +60,7 @@ Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 		return node.firstChild;
 	} else if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
-	} else if (node && !node.firstChild) {
-		// this is an empty node <tag />. When using 'get' it's fine to return null,
-		// but for 'set', we need to create a textnode somewhere.
-		// for lack of better idea, will do it here.
-		var n = document.createTextNode('');
-		return node.appendChild(n);
-	}
+	} 
 //	throw new Error("Can't evaluate expression " + expression);
 	return null;
 };
