@@ -19,18 +19,12 @@
 				</xsl:if>
 				active
 			</option>
-			<option value='on-hold'>
-				<xsl:if test="status='on-hold'">
+			<option value='inactive'>
+				<xsl:if test="status='inactive'">
 					<xsl:attribute name='selected'>selected</xsl:attribute>
 				</xsl:if>
-				on-hold
+				inactive
 			</option>
-			<option value='archived'>
-				<xsl:if test="status='archived'">
-					<xsl:attribute name='selected'>selected</xsl:attribute>
-				</xsl:if>
-				archived
-			</option>			
 		</select><br/>
 		<p>
 			<input type="button" value="cancel" />

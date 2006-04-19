@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- THIS IS A SNAPSHOT OF LIVE DATA FROM BASECAMP. USED DURING DEVELOPMENT ONLY -->
+<posts>
+  <post>
+    <title>This is a message</title>
+    <attachments-count type="integer">0</attachments-count>
+    <id type="integer">2194956</id>
+    <category>
+      <name>Assets</name>
+      <id type="integer">4007205</id>
+    </category>
+    <posted-on type="datetime">2006-04-18T20:52:59Z</posted-on>
+  </post>
+</posts>

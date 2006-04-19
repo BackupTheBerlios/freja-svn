@@ -4,9 +4,11 @@
 	$password = "apitest";
 	$baseUrl  = "http://freja.projectpath.com/";
 
-	$HTTPMethod     = $_GET['HTTP_REQUEST_METHOD'];
-	$HTTPRequestUrl = $_GET['HTTP_REQUEST_URL'];
+	$HTTPMethod     = $_SERVER['REQUEST_METHOD'];
+	$HTTPRequestUrl = urldecode($_GET['url']);
+	
 
+	
 	include('Request.php');
 
 	// safety check, only request legit url
@@ -33,10 +35,10 @@
 				break;
 			case 404:
 				header("HTTP/1.0 404 Not Found");
-				exit;
-			defaul:
+				die(" 404 Not Found");				
+			default:
 				header("HTTP/1.0 502 Bad Gateway");
-				exit;
+				die("Bad Gateway");
 		}
 		header('Content-Type: text/xml');
 		echo $response;
