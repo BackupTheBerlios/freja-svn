@@ -7,10 +7,10 @@ Freja.View = function(url, renderer) {
 	this.document = null;
 	this._renderer = renderer;
 	this._destination = null;
-	this.behaviours = [];
+	this.behaviors = [];
 	this.placeholder = null;
 	Freja._aux.registerSignals(this, ["onload","onrendercomplete"]);
-	Freja._aux.connect(this, "onrendercomplete", Freja._aux.bind(this._connectBehaviour, this));
+	Freja._aux.connect(this, "onrendercomplete", Freja._aux.bind(this._connectBehavior, this));
 };
 /**
   * @param    model            Freja.Model
@@ -78,11 +78,11 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 	return d;
 };
 /**
-  * Decorates the output of the primary renderer, to inject behaviour.
+  * Decorates the output of the primary renderer, to inject behavior.
   * @note Maybe we could use cssQuery (http://dean.edwards.name/my/cssQuery/)
-  *       to identify targets for behaviour
+  *       to identify targets for behavior
   */
-Freja.View.prototype._connectBehaviour = function(destination) {
+Freja.View.prototype._connectBehavior = function(destination) {
 	try {
 		var connectCallback = function(node, eventType, callback) {
 
@@ -101,34 +101,35 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 				}, node)
 			);
 		};
-		var applyHandlers = function(node, behaviours) {
-
+		var applyHandlers = function(node, behaviors) {
 			for (var i = 0, c = node.childNodes, l = c.length; i < l; ++i) {
 				var child = c[i];
 				if (child.nodeType == 1) {
-					var id = child.getAttribute("freja-behaviour");
-					if (id != "") {
-						var handler = behaviours[id];
-						if (handler) {
-							for (var eventType in handler) {
-								if (eventType == "init") {
-									handler.init(child);
-								} else {
-									connectCallback(child, eventType, handler[eventType]);
+					if(child.className) {
+						var classNames = child.className.split(' ');						
+						for (var j=0;j<classNames.length;j++) {											
+							var handler = behaviors[classNames[j]];
+							if (handler) {
+								for (var eventType in handler) {
+									if (eventType == "init") {
+										handler.init(child);
+									} else {
+										connectCallback(child, eventType, handler[eventType]);
+									}
 								}
 							}
 						}
 					}
-					applyHandlers(child, behaviours);
+					applyHandlers(child, behaviors);
 				}
 			}
 		};
 
 		// Avoid traversing the DOM tree if there's no handler to process.
-		// @note: is there a better way? this.behaviours.length is always 0.
-		// @note  This is fine. behaviours is a hashmap, not an array.
-		for (var ids in this.behaviours) {
-			applyHandlers(destination, this.behaviours);
+		// @note: is there a better way? this.behaviors.length is always 0.
+		// @note  This is fine. behaviors is a hashmap, not an array.
+		for (var ids in this.behaviors) {
+			applyHandlers(destination, this.behaviors);
 			break;
 		}
 

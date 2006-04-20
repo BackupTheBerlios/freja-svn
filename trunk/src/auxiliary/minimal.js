@@ -402,7 +402,7 @@ Freja._aux.pickRecentProgID = function(idList) {
 }
 
 if(typeof XSLTProcessor == 'undefined' && typeof ActiveXObject  != 'undefined') {
-alert('ok');
+
     _SARISSA_DOM_PROGID = Freja._aux.pickRecentProgID(["Msxml2.DOMDocument.5.0", "Msxml2.DOMDocument.4.0", "Msxml2.DOMDocument.3.0", "MSXML2.DOMDocument", "MSXML.DOMDocument", "Microsoft.XMLDOM"]);
     _SARISSA_XMLHTTP_PROGID = Freja._aux.pickRecentProgID(["Msxml2.XMLHTTP.5.0", "Msxml2.XMLHTTP.4.0", "MSXML2.XMLHTTP.3.0", "MSXML2.XMLHTTP", "Microsoft.XMLHTTP"]);
     _SARISSA_THREADEDDOM_PROGID = Freja._aux.pickRecentProgID(["Msxml2.FreeThreadedDOMDocument.5.0", "MSXML2.FreeThreadedDOMDocument.4.0", "MSXML2.FreeThreadedDOMDocument.3.0"]);

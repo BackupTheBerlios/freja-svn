@@ -8,10 +8,10 @@
 	<tr>
 		<td><xsl:value-of select="email" /></td>
 		<td>
-			<input type="button" value="edit" freja-behaviour="edit">
+			<input type="button" value="edit" class="edit">
 				<xsl:attribute name="url"><xsl:value-of select="url" /></xsl:attribute>
 			</input>
-			<input type="button" value="delete" freja-behaviour="delete">
+			<input type="button" value="delete" class="delete">
 				<xsl:attribute name="url"><xsl:value-of select="url" /></xsl:attribute>
 			</input>
 		</td>

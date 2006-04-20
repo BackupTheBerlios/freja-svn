@@ -177,7 +177,14 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
   * It ought to be replaced completely with Deferred
   */
 Freja.AssetManager.onerror = function(ex) {
-	alert("Freja.AssetManager.onerror\n" + ex.message);
+	if(ex.message) {
+		alert("Freja.AssetManager.onerror\n" + ex.message);
+	} 
+	// @note: on asynchronous calls, ex refers to the xmlhttpobject
+	// see Bug #7189 (http://developer.berlios.de/bugs/?func=detailbug&group_id=6277&bug_id=7189)
+	else if(ex.status){
+		alert('error '+ ex.status + ' ' +  ex.responseText);
+	}
 };
 /**
   * Global exports

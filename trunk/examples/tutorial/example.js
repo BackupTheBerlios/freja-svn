@@ -2,16 +2,16 @@ var data = getModel("models/data.xml");
 
 var display = getView("views/display.xsl");
 display.placeholder = 'content';
-display.behaviours["editLink"] = {
+display.behaviors["editLink"] = {
 	onclick : function() { dispatch('edit'); }
 };
 
 var edit = getView("views/edit.xsl");
 edit.placeholder = 'content';
-edit.behaviours["editForm"] = {
+edit.behaviors["editForm"] = {
 	onsubmit : function() { dispatch('update'); }
 };
-edit.behaviours["displayLink"] = {
+edit.behaviors["displayLink"] = {
 	onclick : function() { dispatch('display'); }
 };
 

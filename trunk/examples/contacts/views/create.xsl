@@ -8,7 +8,7 @@
 		<p>first_name:<input name="first_name" type="text" value="" /></p>
 		<p>surname:<input name="surname" type="text" value="" /></p>
 		<p>
-			<input type="button" value="cancel" freja-behaviour="cancel" />
+			<input type="button" value="cancel" class="cancel" />
 			<input type="submit" value="ok" />
 		</p>
 	</form>

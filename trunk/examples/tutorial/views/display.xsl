@@ -7,7 +7,7 @@
 	<h3><xsl:value-of select="name" /></h3>
 	<p><xsl:value-of select="description" /></p>
 	<p><em>Price: <xsl:value-of select="price" /></em></p>
-	<p><a href="#" freja-behaviour="editLink">edit</a></p>
+	<p><a href="#" class="editLink">edit</a></p>
 </div>
 </xsl:template>
 

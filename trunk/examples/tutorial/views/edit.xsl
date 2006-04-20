@@ -8,7 +8,7 @@
 		<p><textarea name="item/description"><xsl:value-of select="description" /></textarea></p>
 		<p><input name="item/price" type="text" value="{price}" /></p>
 		<p>
-			<a href="#" freja-behaviour="displayLink">display</a>
+			<a href="#" class="displayLink">display</a>
 			<input type="submit" value="ok" />
 		</p>
 	</form>
