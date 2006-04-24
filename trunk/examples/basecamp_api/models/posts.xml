@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- THIS IS A SNAPSHOT OF LIVE DATA FROM BASECAMP. USED DURING DEVELOPMENT ONLY -->
+<posts>
+  <post>
+    <display-extended-body><p>This is the extended body of the message.</p></display-extended-body>
+    <project-id type="integer">427919</project-id>
+    <title>This is a message</title>
+    <display-body><p>This is the body of the message.</p></display-body>
+    <body>This is the body of the message.</body>
+    <attachments-count type="integer">0</attachments-count>
+    <id type="integer">2194956</id>
+    <category-id type="integer">4007205</category-id>
+    <use-textile type="boolean">true</use-textile>
+    <extended-body>This is the extended body of the message.</extended-body>
+    <comments-count type="integer">0</comments-count>
+    <author-id type="integer">605851</author-id>
+    <posted-on type="datetime">2006-04-18T20:52:59Z</posted-on>
+    <milestone-id type="integer">0</milestone-id>
+  </post>
+</posts>
