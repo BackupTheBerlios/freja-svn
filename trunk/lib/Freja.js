@@ -2,7 +2,7 @@
 
     Freja 2.0.alpha
 
-    Build $Mon, 10 Apr 2006 14:29:25 UTC$
+    Build $Tue, 25 Apr 2006 17:39:11 UTC$
 
     Target: minimal
 
@@ -93,6 +93,9 @@ Freja._aux.formContents = function(elem) {
 				if (input.checked) {
 					names.push(input.name);
 					values.push(input.value);
+				} else {
+					names.push(input.name);
+					values.push("");
 				}
 			} else {
 				names.push(input.name);
@@ -110,12 +113,12 @@ Freja._aux.formContents = function(elem) {
 	}
 	var selects = elem.getElementsByTagName("SELECT");
 	for (var i = 0; i < selects.length; ++i) {
-		var input = textareas[i];
+		var input = selects[i];
 		if (input.name) {
 			if (input.selectedIndex >= 0) {
 				var opt = input.options[input.selectedIndex];
 				names.push(input.name);
-				values.push((opt.value) ? opt.value : opt.text);
+				values.push((opt.value) ? opt.value : "");
 			}
 		}
 	}
@@ -261,8 +264,9 @@ Freja._aux.serializeXML = function(node) {
 /** loadXML(string) : XMLDocument */
 Freja._aux.loadXML = function(text) {
 	if (window.ActiveXObject) {
-		var xmlDoc = new ActiveXObject("Msxml2.DOMDocument.4.0");
+		var xmlDoc = new ActiveXObject("Msxml2.DOMDocument");
 		xmlDoc.loadXML(text);
+		xmlDoc.setProperty("SelectionLanguage", "XPath");
 		return xmlDoc;
 	}
 	return (new DOMParser()).parseFromString(text, "text/xml");
@@ -270,8 +274,25 @@ Freja._aux.loadXML = function(text) {
 /** transformXSL(XMLDocument, XSLDocument) : string */
 Freja._aux.transformXSL = function(xml, xsl, xslParameters) {
 	if (typeof(xml.transformNode) != "undefined") {
-		return xml.transformNode(xsl);
+		// set the parameters
+		for (var paramName in xslParameters) {
+			xsl.setProperty ("SelectionNamespaces", "xmlns:xsl='http://www.w3.org/1999/XSL/Transform'");
+			var paramNode = xsl.selectSingleNode("//xsl:param[@name='"+ paramName +"']");
+			paramNode.appendChild(xsl.createTextNode(xslParameters[paramName]));
+			// @TODO: check if we have the 'select' attribute and remove it.
+		}
+		var result = xml.transformNode(xsl);
+
+		// clean the stylesheet.
+		for (var paramName in xslParameters) {
+			var paramNode = xsl.selectSingleNode("//xsl:param[@name='"+ paramName +"']");
+			while(paramNode.firstChild) {
+				paramNode.removeChild(paramNode.firstChild);
+			}
+		}
+		return result;
 	};
+
 	var processor = new XSLTProcessor();
 	processor.importStylesheet(xsl);
 	for (var paramName in xslParameters) {
@@ -412,6 +433,70 @@ if (document.implementation && document.implementation.hasFeature("XPath", "3.0"
 		}
 	};
 };
+
+// Adapated From Sarissa
+// * @version 0.9.6.1
+// * @author: Manos Batsis, mailto: mbatsis at users full stop sourceforge full stop net
+
+Freja._aux.pickRecentProgID = function(idList) {
+    var bFound = false;
+    for(var i=0; i < idList.length && !bFound; i++){
+        try{
+            var oDoc = new ActiveXObject(idList[i]);
+            return idList[i];
+        } catch (objException){ // trap; try next progID
+        };
+    };
+    throw "Could not retrieve a valid progID.";
+}
+
+if(typeof XSLTProcessor == 'undefined' && typeof ActiveXObject  != 'undefined') {
+
+    _SARISSA_DOM_PROGID = Freja._aux.pickRecentProgID(["Msxml2.DOMDocument.5.0", "Msxml2.DOMDocument.4.0", "Msxml2.DOMDocument.3.0", "MSXML2.DOMDocument", "MSXML.DOMDocument", "Microsoft.XMLDOM"]);
+    _SARISSA_XMLHTTP_PROGID = Freja._aux.pickRecentProgID(["Msxml2.XMLHTTP.5.0", "Msxml2.XMLHTTP.4.0", "MSXML2.XMLHTTP.3.0", "MSXML2.XMLHTTP", "Microsoft.XMLHTTP"]);
+    _SARISSA_THREADEDDOM_PROGID = Freja._aux.pickRecentProgID(["Msxml2.FreeThreadedDOMDocument.5.0", "MSXML2.FreeThreadedDOMDocument.4.0", "MSXML2.FreeThreadedDOMDocument.3.0"]);
+    _SARISSA_XSLTEMPLATE_PROGID = Freja._aux.pickRecentProgID(["Msxml2.XSLTemplate.5.0", "Msxml2.XSLTemplate.4.0", "MSXML2.XSLTemplate.3.0"]);
+
+	XSLTProcessor = function(){
+	    this.template = new ActiveXObject(_SARISSA_XSLTEMPLATE_PROGID);
+	    this.processor = null;
+	};
+
+	XSLTProcessor.prototype.importStylesheet = function(xslDoc){
+	    // convert stylesheet to free threaded
+	    var converted = new ActiveXObject(_SARISSA_THREADEDDOM_PROGID);
+	    converted.loadXML(xslDoc.xml);
+	    this.template.stylesheet = converted;
+	    this.processor = this.template.createProcessor();
+	    // (re)set default param values
+	    this.paramsSet = new Array();
+	};
+
+	XSLTProcessor.prototype.transformToDocument = function(sourceDoc){
+	    this.processor.input = sourceDoc;
+	    var outDoc = new ActiveXObject(_SARISSA_DOM_PROGID);
+	    this.processor.output = outDoc;
+	    this.processor.transform();
+	    return outDoc;
+	};
+
+	XSLTProcessor.prototype.setParameter = function(nsURI, name, value){
+	    /* nsURI is optional but cannot be null */
+	    if(nsURI){
+	        this.processor.addParameter(name, value, nsURI);
+	    }else{
+	        this.processor.addParameter(name, value);
+	    };
+	    /* update updated params for getParameter */
+	    if(!this.paramsSet[""+nsURI]){
+	        this.paramsSet[""+nsURI] = new Array();
+	    };
+	    this.paramsSet[""+nsURI][name] = value;
+	};
+
+}
+
+
 /**
   * The baseclass for queryengines
   * @abstract
@@ -435,6 +520,30 @@ Freja.QueryEngine.prototype.set = function(document, expression, value) {
 	var node = this._find(document, expression);	
 	if(node) {
 		node.nodeValue = value;
+	} else {
+		// text node not found. Might need to be created.
+		// try not to process field names that are not meant to be xpath expressions  
+		if(expression.lastIndexOf('/') != -1) {		 	
+			var nodeName = expression.substr(expression.lastIndexOf('/')+1);
+			
+			if(nodeName.charAt(0)=='@') {
+				// trying to set a non-existing attribute. Let's create it.
+				var newexpression =  expression.substring(0, expression.lastIndexOf('/'));
+				var node = document.selectSingleNode(newexpression);
+				if(node) 
+					node.setAttribute(nodeName.substr(1),value);
+			} else {
+				// this could be an empty node (<tag />)
+				// let's try to create the text node.
+				var node = document.selectSingleNode(expression);
+				if(node) {
+					var n = document.createTextNode(value);
+					node.appendChild(n);							
+				} else {
+					// the element does not exist.
+				}
+			}
+		}
 	}
 };
 /**
@@ -450,13 +559,7 @@ Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 		return node.firstChild;
 	} else if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
-	} else if (node && !node.firstChild) {
-		// this is an empty node <tag />. When using 'get' it's fine to return null,
-		// but for 'set', we need to create a textnode somewhere.
-		// for lack of better idea, will do it here.
-		var n = document.createTextNode('');
-		return node.appendChild(n);
-	}
+	} 
 //	throw new Error("Can't evaluate expression " + expression);
 	return null;
 };
@@ -639,10 +742,10 @@ Freja.View = function(url, renderer) {
 	this.document = null;
 	this._renderer = renderer;
 	this._destination = null;
-	this.behaviours = [];
+	this.behaviors = [];
 	this.placeholder = null;
 	Freja._aux.registerSignals(this, ["onload","onrendercomplete"]);
-	Freja._aux.connect(this, "onrendercomplete", Freja._aux.bind(this._connectBehaviour, this));
+	Freja._aux.connect(this, "onrendercomplete", Freja._aux.bind(this._connectBehavior, this));
 };
 /**
   * @param    model            Freja.Model
@@ -710,11 +813,11 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 	return d;
 };
 /**
-  * Decorates the output of the primary renderer, to inject behaviour.
+  * Decorates the output of the primary renderer, to inject behavior.
   * @note Maybe we could use cssQuery (http://dean.edwards.name/my/cssQuery/)
-  *       to identify targets for behaviour
+  *       to identify targets for behavior
   */
-Freja.View.prototype._connectBehaviour = function(destination) {
+Freja.View.prototype._connectBehavior = function(destination) {
 	try {
 		var connectCallback = function(node, eventType, callback) {
 
@@ -733,34 +836,35 @@ Freja.View.prototype._connectBehaviour = function(destination) {
 				}, node)
 			);
 		};
-		var applyHandlers = function(node, behaviours) {
-
+		var applyHandlers = function(node, behaviors) {
 			for (var i = 0, c = node.childNodes, l = c.length; i < l; ++i) {
 				var child = c[i];
 				if (child.nodeType == 1) {
-					var id = child.getAttribute("freja-behaviour");
-					if (id != "") {
-						var handler = behaviours[id];
-						if (handler) {
-							for (var eventType in handler) {
-								if (eventType == "init") {
-									handler.init(child);
-								} else {
-									connectCallback(child, eventType, handler[eventType]);
+					if(child.className) {
+						var classNames = child.className.split(' ');						
+						for (var j=0;j<classNames.length;j++) {											
+							var handler = behaviors[classNames[j]];
+							if (handler) {
+								for (var eventType in handler) {
+									if (eventType == "init") {
+										handler.init(child);
+									} else {
+										connectCallback(child, eventType, handler[eventType]);
+									}
 								}
 							}
 						}
 					}
-					applyHandlers(child, behaviours);
+					applyHandlers(child, behaviors);
 				}
 			}
 		};
 
 		// Avoid traversing the DOM tree if there's no handler to process.
-		// @note: is there a better way? this.behaviours.length is always 0.
-		// @note  This is fine. behaviours is a hashmap, not an array.
-		for (var ids in this.behaviours) {
-			applyHandlers(destination, this.behaviours);
+		// @note: is there a better way? this.behaviors.length is always 0.
+		// @note  This is fine. behaviors is a hashmap, not an array.
+		for (var ids in this.behaviors) {
+			applyHandlers(destination, this.behaviors);
 			break;
 		}
 
@@ -1069,13 +1173,15 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 		d.callback(document);
 	};
 	try {
-		if (preventCaching && Freja.AssetManager.HTTP_METHOD_TUNNEL) {
+		/* Why using HTTP_METHOD_TUNNEL for a GET? 
+		  if (preventCaching && Freja.AssetManager.HTTP_METHOD_TUNNEL) {
 			var req = Freja._aux.openXMLHttpRequest("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async", Freja.AssetManager._username, Freja.AssetManager._password);
 			req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, "GET");
 			req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 		} else {
+		*/
 			var req = Freja._aux.openXMLHttpRequest("GET", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async", Freja.AssetManager._username, Freja.AssetManager._password);
-		}
+		/*}*/
 
 		// This shouldn't be nescesary, but alas it is - firefox chokes
 		// It's probably due to an error in MochiKit, so the problem
@@ -1103,7 +1209,14 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
   * It ought to be replaced completely with Deferred
   */
 Freja.AssetManager.onerror = function(ex) {
-	alert("Freja.AssetManager.onerror\n" + ex.message);
+	if(ex.message) {
+		alert("Freja.AssetManager.onerror\n" + ex.message);
+	} 
+	// @note: on asynchronous calls, ex refers to the xmlhttpobject
+	// see Bug #7189 (http://developer.berlios.de/bugs/?func=detailbug&group_id=6277&bug_id=7189)
+	else if(ex.status){
+		alert('error '+ ex.status + ' ' +  ex.responseText);
+	}
 };
 /**
   * Global exports
