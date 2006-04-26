@@ -193,8 +193,15 @@ Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, v
 	// prepare posted data  (no need to send the XSL document, just its url)
 	var xslUrl = view.url;
 	var postedData = "xslFile=" + encodeURIComponent(xslUrl) + "&xmlData=" + encodeURIComponent(Freja._aux.serializeXML(model.document));
-	if (xslParameters)
-		postedData  = postedData + "&xslParam=" + encodeURIComponent(xslParameters.toString());
+	
+	var xslParameterString = '';
+	for (var paramname in xslParameters) {
+		xslParameterString += encodeURIComponent(paramname + "," + xslParameters[paramname]);
+	}
+	if(xslParameterString.length > 0) {
+		postedData  = postedData + '&xslParam=' + xslParameterString;
+	} 
+
 	// send request to the server-side XSL transformation service
 	var req = Freja.AssetManager.openXMLHttpRequest("POST", Freja.AssetManager.XSLT_SERVICE_URL);
 	req.onreadystatechange = function() {
