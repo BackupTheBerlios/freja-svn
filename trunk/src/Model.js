@@ -6,7 +6,6 @@ Freja.Model = function(url, query) {
 	this.ready = false;
 	this.document = null;
 	this._query = query;
-	Freja._aux.registerSignals(this, ["onload"]);
 };
 /**
   * Returns a single value

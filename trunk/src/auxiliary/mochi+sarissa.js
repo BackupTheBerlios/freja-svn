@@ -47,8 +47,6 @@ Freja._aux.formContents = MochiKit.DOM.formContents;
 /** getElement(id) : HTMLElement */
 Freja._aux.getElement = MochiKit.DOM.getElement;
 
-/** registerSignals(src, signals) : void */
-Freja._aux.registerSignals = MochiKit.Signal.registerSignals;
 /** connect(src, signal, fnc) : void */
 Freja._aux.connect = MochiKit.Signal.connect;
 /** signal(src, signal, arg) : void */

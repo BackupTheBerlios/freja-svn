@@ -84,8 +84,6 @@ Freja._aux.getElement = function(id) {
 	}
 };
 
-/** registerSignals(src, signals) : void */
-Freja._aux.registerSignals = function(src, signals) { /* void */ };
 /** connect(src, signal, fnc) : void */
 Freja._aux.connect = function(src, signal, fnc) {
 

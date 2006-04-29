@@ -19,7 +19,7 @@ Freja.QueryEngine.prototype.get = function(document, expression) {
 		return null;
 	}
 	if(node) return node.nodeValue;
-	
+
 };
 Freja.QueryEngine.prototype.set = function(document, expression, value) {
 	try {
@@ -28,8 +28,8 @@ Freja.QueryEngine.prototype.set = function(document, expression, value) {
 			node.nodeValue = value;
 	} catch(x) {
 		// text node not found. Might need to be created.
-		// try not to process field names that are not meant to be xpath expressions  
-		if(expression.lastIndexOf('/') != -1) {		
+		// try not to process field names that are not meant to be xpath expressions
+		if(expression.lastIndexOf('/') != -1) {
 			var nodeName = expression.substr(expression.lastIndexOf('/')+1);
 			if(nodeName.charAt(0)=='@') {
 				// trying to set a non-existing attribute. Let's create it.
@@ -54,21 +54,21 @@ Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 	var node = document.selectSingleNode(expression);
 	if (node && node.nodeType == 2) {
 		return node;
-	} 
+	}
 	if (node && node.firstChild && node.firstChild.nodeType == 3) {
 		return node.firstChild;
-	} 
+	}
 	if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
-	} 
+	}
 	if (node && node.nodeType==1 && !node.firstChild) {
 		// empty element (<tag/>). Let's create and return a blank text node
-		return node.appendChild(document.createTextNode(''));			  
+		return node.appendChild(window.document.createTextNode(''));
 	}
-	
+
 	throw new Error("Can't evaluate expression " + expression);
 	return null;
-}; 
+};
 /**
   * SimplePath
   */
@@ -91,7 +91,7 @@ Freja.QueryEngine.SimplePath.prototype._find = function(document, expression) {
 		if(filter) {
 			// filter[1] element name, filter[2] attribute name, filter[3] attribute value
 			if(i>0 && parts[i-1]=='') {
-				// expression was of type //element[...] 
+				// expression was of type //element[...]
 				var cn = node.getElementsByTagName(filter[1]);
 			} else {
 				var cn = node.childNodes;
@@ -105,7 +105,7 @@ Freja.QueryEngine.SimplePath.prototype._find = function(document, expression) {
 			if (j==l)
 				throw new Error("Can't evaluate expression " + part);
 		}
-		else {		
+		else {
 			offset = regOffset.exec(part);
 			if (offset) {
 				part = offset[1];
@@ -125,16 +125,16 @@ Freja.QueryEngine.SimplePath.prototype._find = function(document, expression) {
 	}
 	if (node && node.firstChild && node.firstChild.nodeType == 3) {
 		return node.firstChild;
-	} 
+	}
 	if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
 	}
 	if (node && node.nodeType==1 && !node.firstChild) {
 		// empty element (<tag/>). Let's create and return a blank text node
-		return node.appendChild(document.createTextNode(''));			  
+		return node.appendChild(window.document.createTextNode(''));
 	}
-	
-	if (!node) {		
+
+	if (!node) {
 		throw new Error("Can't evaluate expression " + expression);
 	}
 	return node;

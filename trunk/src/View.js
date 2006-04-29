@@ -9,7 +9,6 @@ Freja.View = function(url, renderer) {
 	this._destination = null;
 	this.behaviors = [];
 	this.placeholder = null;
-	Freja._aux.registerSignals(this, ["onload","onrendercomplete"]);
 	Freja._aux.connect(this, "onrendercomplete", Freja._aux.bind(this._connectBehavior, this));
 };
 /**
@@ -106,8 +105,8 @@ Freja.View.prototype._connectBehavior = function(destination) {
 				var child = c[i];
 				if (child.nodeType == 1) {
 					if(child.className) {
-						var classNames = child.className.split(' ');						
-						for (var j=0;j<classNames.length;j++) {											
+						var classNames = child.className.split(' ');
+						for (var j=0;j<classNames.length;j++) {
 							var handler = behaviors[classNames[j]];
 							if (handler) {
 								for (var eventType in handler) {
@@ -193,14 +192,14 @@ Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, v
 	// prepare posted data  (no need to send the XSL document, just its url)
 	var xslUrl = view.url;
 	var postedData = "xslFile=" + encodeURIComponent(xslUrl) + "&xmlData=" + encodeURIComponent(Freja._aux.serializeXML(model.document));
-	
+
 	var xslParameterString = '';
 	for (var paramname in xslParameters) {
 		xslParameterString += encodeURIComponent(paramname + "," + xslParameters[paramname]);
 	}
 	if(xslParameterString.length > 0) {
 		postedData  = postedData + '&xslParam=' + xslParameterString;
-	} 
+	}
 
 	// send request to the server-side XSL transformation service
 	var req = Freja.AssetManager.openXMLHttpRequest("POST", Freja.AssetManager.XSLT_SERVICE_URL);

@@ -36,7 +36,8 @@ tests.test_View = function (t) {
 	// test of form
 	var formView = Freja.AssetManager.getView("data/form-view.xsl");
 	var testofsubmit = false;
-	formView.behaviours["form"] = {
+
+	formView.behaviors["form"] = {
 		onsubmit : function() { testofsubmit = true; }
 	};
 	formView.render(model, out);

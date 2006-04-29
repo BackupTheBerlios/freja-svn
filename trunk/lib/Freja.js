@@ -2,7 +2,7 @@
 
     Freja 2.0.alpha
 
-    Build $Tue, 25 Apr 2006 17:39:11 UTC$
+    Build $Sat, 29 Apr 2006 09:18:08 UTC$
 
     Target: minimal
 
@@ -133,8 +133,6 @@ Freja._aux.getElement = function(id) {
 	}
 };
 
-/** registerSignals(src, signals) : void */
-Freja._aux.registerSignals = function(src, signals) { /* void */ };
 /** connect(src, signal, fnc) : void */
 Freja._aux.connect = function(src, signal, fnc) {
 
@@ -512,37 +510,35 @@ Freja.QueryEngine.prototype.getElementById = function(document, id) {
 	}
 };
 Freja.QueryEngine.prototype.get = function(document, expression) {
-	var node = this._find(document, expression);
+	try {
+		var node = this._find(document, expression);
+	} catch(x) {
+		return null;
+	}
 	if(node) return node.nodeValue;
-	return null;
+
 };
 Freja.QueryEngine.prototype.set = function(document, expression, value) {
-	var node = this._find(document, expression);	
-	if(node) {
-		node.nodeValue = value;
-	} else {
+	try {
+		var node = this._find(document, expression);
+		if(node)
+			node.nodeValue = value;
+	} catch(x) {
 		// text node not found. Might need to be created.
-		// try not to process field names that are not meant to be xpath expressions  
-		if(expression.lastIndexOf('/') != -1) {		 	
+		// try not to process field names that are not meant to be xpath expressions
+		if(expression.lastIndexOf('/') != -1) {
 			var nodeName = expression.substr(expression.lastIndexOf('/')+1);
-			
 			if(nodeName.charAt(0)=='@') {
 				// trying to set a non-existing attribute. Let's create it.
-				var newexpression =  expression.substring(0, expression.lastIndexOf('/'));
-				var node = document.selectSingleNode(newexpression);
-				if(node) 
-					node.setAttribute(nodeName.substr(1),value);
-			} else {
-				// this could be an empty node (<tag />)
-				// let's try to create the text node.
-				var node = document.selectSingleNode(expression);
-				if(node) {
-					var n = document.createTextNode(value);
-					node.appendChild(n);							
-				} else {
-					// the element does not exist.
+				var parentExpression =  expression.substring(0, expression.lastIndexOf('/'));
+				var pNode = this._find(document, parentExpression);
+				if(pNode) {
+					// this._find returns a text node
+					pNode = pNode.parentNode;
+					pNode.setAttribute(nodeName.substr(1),value);
 				}
 			}
+			// else parent element does not exist.. can't do anything
 		}
 	}
 };
@@ -555,12 +551,19 @@ Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 	var node = document.selectSingleNode(expression);
 	if (node && node.nodeType == 2) {
 		return node;
-	} else if (node && node.firstChild && node.firstChild.nodeType == 3) {
+	}
+	if (node && node.firstChild && node.firstChild.nodeType == 3) {
 		return node.firstChild;
-	} else if (node && node.firstChild && node.firstChild.nodeType == 4) {
+	}
+	if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
-	} 
-//	throw new Error("Can't evaluate expression " + expression);
+	}
+	if (node && node.nodeType==1 && !node.firstChild) {
+		// empty element (<tag/>). Let's create and return a blank text node
+		return node.appendChild(window.document.createTextNode(''));
+	}
+
+	throw new Error("Can't evaluate expression " + expression);
 	return null;
 };
 /**
@@ -569,38 +572,65 @@ Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 Freja.QueryEngine.SimplePath = function() {};
 Freja.Class.extend(Freja.QueryEngine.SimplePath, Freja.QueryEngine);
 Freja.QueryEngine.SimplePath.prototype._find = function(document, expression) {
-	if (!expression.match(/^[\d\w\/@\[\]]*$/)) {
+	if (!expression.match(/^[\d\w\/@\[\]=_\-']*$/)) {
 		throw new Error("Can't evaluate expression " + expression);
 	}
 	var parts = expression.split(/\//);
 	var node = document;
 	var regAttr = new RegExp("^@([\\d\\w]*)");
 	var regOffset = new RegExp("^([@\\d\\w]*)\\[([\\d]*)\\]$");
+	var regFilter = new RegExp("^([\\d\\w]+)\\[@([@\\d\\w]+)=['\"]{1}(.*)['\"]{1}\\]$");
 	var attr = null;
 	var offset = 0;
 	for (var i = 0; i < parts.length; ++i) {
 		var part = parts[i];
-		offset = regOffset.exec(part);
-		if (offset) {
-			part = offset[1];
-			offset = offset[2] - 1;
-		} else {
-			offset = 0;
-		}
-		if (part != "") {
-			attr = regAttr.exec(part);
-			if (attr) {
-				node = node.getAttributeNode(attr[1]);
+		var filter = regFilter.exec(part);
+		if(filter) {
+			// filter[1] element name, filter[2] attribute name, filter[3] attribute value
+			if(i>0 && parts[i-1]=='') {
+				// expression was of type //element[...]
+				var cn = node.getElementsByTagName(filter[1]);
 			} else {
-				node = node.getElementsByTagName(part).item(offset);
+				var cn = node.childNodes;
+			}
+			for(var j=0, l=cn.length; j<l ; j++) {
+				if(cn[j].nodeType==1 && cn[j].tagName==filter[1] && cn[j].getAttribute(filter[2])== filter[3]) {
+					node = cn[j];
+					break;
+				}
+			}
+			if (j==l)
+				throw new Error("Can't evaluate expression " + part);
+		}
+		else {
+			offset = regOffset.exec(part);
+			if (offset) {
+				part = offset[1];
+				offset = offset[2] - 1;
+			} else {
+				offset = 0;
+			}
+			if (part != "") {
+				attr = regAttr.exec(part);
+				if (attr) {
+					node = node.getAttributeNode(attr[1]);
+				} else {
+					node = node.getElementsByTagName(part).item(offset);
+				}
 			}
 		}
 	}
 	if (node && node.firstChild && node.firstChild.nodeType == 3) {
 		return node.firstChild;
-	} else if (node && node.firstChild && node.firstChild.nodeType == 4) {
+	}
+	if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
 	}
+	if (node && node.nodeType==1 && !node.firstChild) {
+		// empty element (<tag/>). Let's create and return a blank text node
+		return node.appendChild(window.document.createTextNode(''));
+	}
+
 	if (!node) {
 		throw new Error("Can't evaluate expression " + expression);
 	}
@@ -614,7 +644,6 @@ Freja.Model = function(url, query) {
 	this.ready = false;
 	this.document = null;
 	this._query = query;
-	Freja._aux.registerSignals(this, ["onload"]);
 };
 /**
   * Returns a single value
@@ -744,7 +773,6 @@ Freja.View = function(url, renderer) {
 	this._destination = null;
 	this.behaviors = [];
 	this.placeholder = null;
-	Freja._aux.registerSignals(this, ["onload","onrendercomplete"]);
 	Freja._aux.connect(this, "onrendercomplete", Freja._aux.bind(this._connectBehavior, this));
 };
 /**
@@ -841,8 +869,8 @@ Freja.View.prototype._connectBehavior = function(destination) {
 				var child = c[i];
 				if (child.nodeType == 1) {
 					if(child.className) {
-						var classNames = child.className.split(' ');						
-						for (var j=0;j<classNames.length;j++) {											
+						var classNames = child.className.split(' ');
+						for (var j=0;j<classNames.length;j++) {
 							var handler = behaviors[classNames[j]];
 							if (handler) {
 								for (var eventType in handler) {
@@ -928,8 +956,15 @@ Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, v
 	// prepare posted data  (no need to send the XSL document, just its url)
 	var xslUrl = view.url;
 	var postedData = "xslFile=" + encodeURIComponent(xslUrl) + "&xmlData=" + encodeURIComponent(Freja._aux.serializeXML(model.document));
-	if (xslParameters)
-		postedData  = postedData + "&xslParam=" + encodeURIComponent(xslParameters.toString());
+
+	var xslParameterString = '';
+	for (var paramname in xslParameters) {
+		xslParameterString += encodeURIComponent(paramname + "," + xslParameters[paramname]);
+	}
+	if(xslParameterString.length > 0) {
+		postedData  = postedData + '&xslParam=' + xslParameterString;
+	}
+
 	// send request to the server-side XSL transformation service
 	var req = Freja.AssetManager.openXMLHttpRequest("POST", Freja.AssetManager.XSLT_SERVICE_URL);
 	req.onreadystatechange = function() {
