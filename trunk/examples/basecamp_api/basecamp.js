@@ -21,6 +21,7 @@
 	var messageList_view     = getView("views/message_list.xsl");
 	var message_view         = getView("views/message.xsl");
 	var milestoneList_view   = getView("views/milestone_list.xsl");
+	var categoryList_view    = getView("views/category_list.xsl");
 	
 	// Models
 	var projects   = getModel("models/projects.xml"); 	// Snapshot. Live data: getModel(addProxyToUrl("/project/list")));	
@@ -48,11 +49,13 @@
 		requestTemplate = getModel("models/new_request.xml");   // xml wrapper for posted data
 		messageTemplate = getModel("models/new_post.xml");      // skeleton for new data
 		
+	
+		//Freja._aux.connect(categories, 'onload', function(){showModelSnapshot(categories)});
 		
 		todoList_view.render(todos, 'placeholder_todos');
 		messageList_view.render(messages, 'placeholder_messages');
 		milestoneList_view.render(milestones, 'placeholder_milestones');
-		
+		categoryList_view.render(categories, 'placeholder_categories');
 	}
 	Freja._aux.connect(projects, 'onload', function(){loadProjectAssets()});
 
@@ -117,6 +120,13 @@
 		}
 	}
 	
+	categoryList_view.behaviors["editCategoryLink"] = {
+		onclick : function(node) {
+			var id = extractId(node.id);
+			return false;
+		}
+	}
+	
 	projectSelector_view.behaviors["projectSelector"] = {
 		onchange: function(node) { 
 			var projectId = node.options[node.selectedIndex].value;
@@ -172,6 +182,7 @@
 		} 
 		var tmpid = 'tmp'+getRandomId();
 		messageTemplate.set('/post/id', tmpid);
+		messageTemplate.set('/post/category-id', '4007205');
 				
 		if(messages.document.importNode) {
 			newMessage = messages.document.importNode(messageTemplate.document.documentElement,true);
@@ -194,7 +205,11 @@
 		// get first record to be synchronized
 		var outofsync = model.document.selectSingleNode("//*[@synchronized='false']"); 
 		
-		while(outofsync) {			
+		while(outofsync) {		
+			// clean synchronized attribute before using outofsync to build the request 
+			// (basecamp API doesn't like foreign attributes)
+			outofsync.removeAttribute('synchronized');
+				
 			// build request
 			var requestNode = requestTemplate.document.documentElement
 			requestNode.appendChild(requestTemplate.document.importNode(outofsync, true));
@@ -206,17 +221,17 @@
 				idNode.parentNode.removeChild(idNode);
 				idNode = requestNode.getElementsByTagName('id')[0];			
 			}
+			
 			showModelSnapshot(requestTemplate);	
 
 			// send request			
 			var d = requestTemplate.save();	
 			d.addCallback(function(obj) {
-				alert('ok ' + obj.responseText + ' ' + obj.status + ' ' + obj.responseXML);
-				//outofsync.setAttribute('synchronized','true');
+				outofsync.setAttribute('synchronized','true');
 			});
-			d.addErrback(function() {
-				alert('error ');
-				//outofsync.setAttribute('synchronized','false');
+			d.addErrback(function(obj) {
+				showHTTPResponse("ERROR:\n"+obj.responseText);
+				outofsync.setAttribute('synchronized','false');
 			});
 			outofsync.setAttribute('synchronized','pending'); 
 			
@@ -279,8 +294,11 @@
 		dbg.innerHTML = "<textarea cols='60' rows='15'>"+xml+"</textarea>";		
 		dbg.style.display = "block";
 	}
-
-
+	function showHTTPResponse(txt) {
+		var dbg = document.getElementById('placeholder_debug');
+		dbg.innerHTML = "<textarea cols='60' rows='15'>"+txt+"</textarea>";	
+		dbg.style.display = "block";
+	}
 	// ---------------------------------------------------------------------------------------------
 	// errorHandler
 	// ---------------------------------------------------------------------------------------------

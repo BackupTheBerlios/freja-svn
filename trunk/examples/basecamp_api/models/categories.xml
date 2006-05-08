@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- THIS IS A SNAPSHOT OF LIVE DATA FROM BASECAMP. USED DURING DEVELOPMENT ONLY -->
+<post-categories>
+  <post-category>
+    <name>Assets</name>
+    <elements-count type="integer">1</elements-count>
+    <project-id type="integer">427919</project-id>
+    <id type="integer">4007205</id>
+  </post-category>
+  <post-category>
+    <name>Code</name>
+    <elements-count type="integer">1</elements-count>
+    <project-id type="integer">427919</project-id>
+    <id type="integer">4007202</id>
+  </post-category>
+  <post-category>
+    <name>Copywriting</name>
+    <elements-count type="integer">0</elements-count>
+    <project-id type="integer">427919</project-id>
+    <id type="integer">4007203</id>
+  </post-category>
+  <post-category>
+    <name>Design</name>
+    <elements-count type="integer">0</elements-count>
+    <project-id type="integer">427919</project-id>
+    <id type="integer">4007201</id>
+  </post-category>
+  <post-category>
+    <name>Miscellaneous</name>
+    <elements-count type="integer">0</elements-count>
+    <project-id type="integer">427919</project-id>
+    <id type="integer">4007206</id>
+  </post-category>
+  <post-category>
+    <name>Transcripts</name>
+    <elements-count type="integer">0</elements-count>
+    <project-id type="integer">427919</project-id>
+    <id type="integer">4007204</id>
+  </post-category>
+</post-categories>

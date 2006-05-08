@@ -4,11 +4,9 @@
 	$password = "apitest";
 	$baseUrl  = "http://freja.projectpath.com/";
 
-	$HTTPMethod     = $_SERVER['REQUEST_METHOD'];
-	$HTTPRequestUrl = urldecode($_GET['url']);
-	
-
-	
+	$HTTPMethod      = $_SERVER['REQUEST_METHOD'];
+	$HTTPRequestUrl  = urldecode($_REQUEST['url']);		
+	$HTTPRawPostData = file_get_contents("php://input");
 	include('Request.php');
 
 	// safety check, only request legit url
@@ -19,8 +17,9 @@
 		$req->setMethod($HTTPMethod);
 		$req->addHeader('Content-Type','application/xml');
 		$req->addHeader('Accept','application/xml');
-		$req->clearPostData();
-		// $req->addPostData('Foo', 'bar');
+		if($HTTPRawPostData) {
+			$req->_body = $HTTPRawPostData;
+		}
 		$req->sendRequest();
 
 		$response = $req->getResponseBody();
@@ -35,10 +34,10 @@
 				break;
 			case 404:
 				header("HTTP/1.0 404 Not Found");
-				die(" 404 Not Found");				
+				die(" 404 Not Found -".$response);				
 			default:
 				header("HTTP/1.0 502 Bad Gateway");
-				die("Bad Gateway");
+				die("Bad Gateway - ".$code." ".$response." # ".$HTTPRequestUrl." # ".$req->_body);
 		}
 		header('Content-Type: text/xml');
 		echo $response;
@@ -47,6 +46,4 @@
 		header("HTTP/1.0 403 Forbidden");
 		echo "Requested url not allowed.";
 	}
-
-
 ?>
