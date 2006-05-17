@@ -166,7 +166,7 @@ Freja._aux.sendXMLHttpRequest = function(req, sendContent) {
 	var bComplete = false;
 	req.onreadystatechange = function() {
 		if (req.readyState == 4 && !bComplete) {
-			if (req.status == 0 || req.status == 200 || req.status == 304) {
+			if (req.status == 0 || req.status == 200 || req.status == 201 || req.status == 304) {
 				d.callback(req);
 			} else {
 				d.errback(req);
