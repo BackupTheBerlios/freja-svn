@@ -18,12 +18,44 @@
 </head>
 
 <body>
-<div id="placeholder_projectSelector"></div>
-<div id="placeholder_main"></div>
-<div id="placeholder_todos"></div>
-<div id="placeholder_milestones"></div>
-<div id="placeholder_messages"></div>
-<div id="placeholder_categories"></div>
-<div id="placeholder_debug"></div>
+	<div id="container">
+		<div id="header">
+			<img src="images/basecamp-remix.png" alt="Basecamp remix" align="right" />
+			<div id="placeholder_projectSelector"></div>
+		</div>
+		<div id="content">			
+
+			<div class="frame">
+				<div class="top">TO-DOS</div>
+				<div id="placeholder_todos" class="frameContent"></div>
+				<div class="bottom">&nbsp;</div>
+			</div>
+			
+			<div class="frame">
+				<div class="top">MILESTONES</div>
+				<div id="placeholder_milestones" class="frameContent"></div>
+				<div class="bottom">&nbsp;</div>
+			</div>
+
+			
+			<div class="messages">
+				<div class="top"><img src="images/messages-header.png" alt="Messages" /></div>
+				<div id="placeholder_messages" class="frameContent"></div>
+				<div class="bottom"><img src="images/messages-footer.png" alt="*" /></div>
+			</div>
+			
+			<div class="frame">
+				<div class="top">Misc.</div>
+				<div id="placeholder_categories" class="frameContent"></div>
+				<div class="bottom">&nbsp;</div>
+			</div>
+			
+			
+			<div id="placeholder_debug"></div>
+			<div id="placeholder_debug2"></div>
+		</div>
+		<div id="footer">&nbsp;
+		</div>
+	</div>
 </body>
 </html>
