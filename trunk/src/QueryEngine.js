@@ -61,10 +61,6 @@ Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 	if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
 	}
-	if (node && node.nodeType==1 && !node.firstChild) {
-		// empty element (<tag/>). Let's create and return a blank text node
-		return node.appendChild(window.document.createTextNode(''));
-	}
 
 	throw new Error("Can't evaluate expression " + expression);
 	return null;
@@ -128,10 +124,6 @@ Freja.QueryEngine.SimplePath.prototype._find = function(document, expression) {
 	}
 	if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
-	}
-	if (node && node.nodeType==1 && !node.firstChild) {
-		// empty element (<tag/>). Let's create and return a blank text node
-		return node.appendChild(window.document.createTextNode(''));
 	}
 
 	if (!node) {

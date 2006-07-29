@@ -2,7 +2,7 @@
 
     Freja 2.0.alpha
 
-    Build $Sat, 29 Apr 2006 09:18:08 UTC$
+    Build $Fri, 28 Jul 2006 13:38:48 UTC$
 
     Target: minimal
 
@@ -215,7 +215,7 @@ Freja._aux.sendXMLHttpRequest = function(req, sendContent) {
 	var bComplete = false;
 	req.onreadystatechange = function() {
 		if (req.readyState == 4 && !bComplete) {
-			if (req.status == 0 || req.status == 200 || req.status == 304) {
+			if (req.status == 0 || req.status == 200 || req.status == 201 || req.status == 304) {
 				d.callback(req);
 			} else {
 				d.errback(req);
@@ -558,10 +558,6 @@ Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 	if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
 	}
-	if (node && node.nodeType==1 && !node.firstChild) {
-		// empty element (<tag/>). Let's create and return a blank text node
-		return node.appendChild(window.document.createTextNode(''));
-	}
 
 	throw new Error("Can't evaluate expression " + expression);
 	return null;
@@ -625,10 +621,6 @@ Freja.QueryEngine.SimplePath.prototype._find = function(document, expression) {
 	}
 	if (node && node.firstChild && node.firstChild.nodeType == 4) {
 		return node.firstChild;
-	}
-	if (node && node.nodeType==1 && !node.firstChild) {
-		// empty element (<tag/>). Let's create and return a blank text node
-		return node.appendChild(window.document.createTextNode(''));
 	}
 
 	if (!node) {
@@ -1208,22 +1200,25 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 		d.callback(document);
 	};
 	try {
-		/* Why using HTTP_METHOD_TUNNEL for a GET? 
-		  if (preventCaching && Freja.AssetManager.HTTP_METHOD_TUNNEL) {
+		// Why using HTTP_METHOD_TUNNEL for a GET?
+		//-- to prevent caching, since browsers won't cache a POST
+		if (preventCaching && Freja.AssetManager.HTTP_METHOD_TUNNEL) {
 			var req = Freja._aux.openXMLHttpRequest("POST", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async", Freja.AssetManager._username, Freja.AssetManager._password);
 			req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL, "GET");
 			req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 		} else {
-		*/
 			var req = Freja._aux.openXMLHttpRequest("GET", url, Freja.AssetManager.HTTP_REQUEST_TYPE == "async", Freja.AssetManager._username, Freja.AssetManager._password);
-		/*}*/
+		}
 
 		// This shouldn't be nescesary, but alas it is - firefox chokes
 		// It's probably due to an error in MochiKit, so the problem
 		// should be fixed there.
 		var comm = Freja._aux.sendXMLHttpRequest(req);
 		if (Freja.AssetManager.HTTP_REQUEST_TYPE == "async") {
-			comm.addCallbacks(handler, Freja._aux.bind(d.errback, d));
+			// fixes bug #7189 (http://developer.berlios.de/bugs/?func=detailbug&group_id=6277&bug_id=7189)
+			comm.addCallbacks(handler, function(req) {
+				d.errback(new Error("Request failed:" + req.status));
+			});
 		} else {
 			if (req.status == 0 || req.status == 200 || req.status == 304) {
 				handler(req);
@@ -1244,14 +1239,7 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
   * It ought to be replaced completely with Deferred
   */
 Freja.AssetManager.onerror = function(ex) {
-	if(ex.message) {
-		alert("Freja.AssetManager.onerror\n" + ex.message);
-	} 
-	// @note: on asynchronous calls, ex refers to the xmlhttpobject
-	// see Bug #7189 (http://developer.berlios.de/bugs/?func=detailbug&group_id=6277&bug_id=7189)
-	else if(ex.status){
-		alert('error '+ ex.status + ' ' +  ex.responseText);
-	}
+	alert("Freja.AssetManager.onerror\n" + ex.message);
 };
 /**
   * Global exports

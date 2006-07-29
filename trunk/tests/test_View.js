@@ -6,6 +6,7 @@ tests.test_View = function (t) {
 	Freja.AssetManager.HTTP_REQUEST_TYPE = "sync";
 	Freja.AssetManager.XSLT_SERVICE_URL = "../external/srvc-xslt.php";
 	Freja.AssetManager.XSLT_SERVICE_URL = "../external/srvc-xslt.php?path=tests/";
+
 	var view = Freja.AssetManager.getView("data/view.xsl");
 	t.ok(view instanceof Freja.View);
 	t.is(view.ready, true, "state should be ready (loaded)");
@@ -46,7 +47,7 @@ tests.test_View = function (t) {
 	out.parentNode.removeChild(out);
 
 	t.ok(testofsubmit, "The form has been intercepted by our handler");
-
+	
 	//////////////////////////////////////////////////////////////////////
 	// async tests below
 
@@ -67,4 +68,7 @@ tests.test_View = function (t) {
 	}
 	t.ok(exc == false, "The render should be postproned until loading have completed");
 
+	// test Bug #7189 (http://developer.berlios.de/bugs/?func=detailbug&group_id=6277&bug_id=7189)
+	Freja.AssetManager.onerror = function (ex) { if (ex.message != "Request failed:404") throw ex; }
+	var view = Freja.AssetManager.getView("not_there.xsl");
 };
