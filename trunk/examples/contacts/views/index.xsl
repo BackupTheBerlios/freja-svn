@@ -18,7 +18,7 @@
 	</tr>
 </xsl:for-each> 
 	<tr>
-		<td align="right" colspan="2"><input type="button" value="create" freja-behaviour="create" /></td>
+		<td align="right" colspan="2"><input type="button" value="create" class="create" /></td>
 	</tr>
 </table>
 </xsl:template>
