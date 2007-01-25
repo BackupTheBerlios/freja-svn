@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<post>
+	<title></title>
+	<body></body>
+	<id type="integer" />
+	<category-id type="integer" />
+	<use-textile type="boolean">true</use-textile>
+	<extended-body />
+	<private type="boolean">true</private>
+</post>

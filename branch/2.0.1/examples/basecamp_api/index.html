@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>BaseCamp Remixed with Freja</title>
+
+<link href="css/main.css" rel="stylesheet" type="text/css" />
+
+<!-- 3rd parties Scripts -->
+<script type="text/javascript" src="lib/helpers.js"></script>
+
+<!-- Freja Framework Script -->
+<script type="text/javascript" src="../lib/Freja.js"></script>
+
+<!-- Controller Code -->
+<script type="text/javascript" src="basecamp.js"></script>
+
+</head>
+
+<body>
+	<div id="container">
+		<div id="header">
+			<img src="images/basecamp-remix.png" alt="Basecamp remix" align="right" />
+			<div id="placeholder_projectSelector"></div>
+		</div>
+		<div id="content">			
+
+			<div class="frame">
+				<div class="top">TO-DOS</div>
+				<div id="placeholder_todos" class="frameContent"></div>
+				<div class="bottom">&nbsp;</div>
+			</div>
+			
+			<div class="frame">
+				<div class="top">MILESTONES</div>
+				<div id="placeholder_milestones" class="frameContent"></div>
+				<div class="bottom">&nbsp;</div>
+			</div>
+
+			
+			<div class="messages">
+				<div class="top"><img src="images/messages-header.png" alt="Messages" /></div>
+				<div id="placeholder_messages" class="frameContent"></div>
+				<div class="bottom"><img src="images/messages-footer.png" alt="*" /></div>
+			</div>
+			
+			<div class="frame">
+				<div class="top">Misc.</div>
+				<div id="placeholder_categories" class="frameContent"></div>
+				<div class="bottom">&nbsp;</div>
+			</div>
+			
+			
+			<div id="placeholder_debug"></div>
+			<div id="placeholder_debug2"></div>
+		</div>
+		<div id="footer">&nbsp;
+		</div>
+	</div>
+</body>
+</html>
