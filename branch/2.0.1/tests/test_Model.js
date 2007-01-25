@@ -43,8 +43,7 @@ tests.test_Model = function (t) {
 	var model = Freja.AssetManager.getModel("data/model2.xml");
 	t.is(model.get("item/@price"), "$3.80");
 	t.is(model.get("item/description"), "with Goat Cheese, a touch of Cumin and Cayenne");
-
-
+	
 	var model3 = Freja.AssetManager.getModel("data/model3.xml");
 	model3.set("item/price","$5.40");
 	t.is(model3.get("item/price"), "$5.40");

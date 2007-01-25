@@ -13,57 +13,79 @@ Freja.QueryEngine.prototype.getElementById = function(document, id) {
 	}
 };
 Freja.QueryEngine.prototype.get = function(document, expression) {
-	try {
-		var node = this._find(document, expression);
-	} catch(x) {
-		return null;
-	}
-	if(node) return node.nodeValue;
+	
+	var node = this._find(document, expression);
 
+	if(!node) throw new Error("Can't evaluate expression " + expression);
+
+	switch(node.nodeType) {
+		case 1: /* element */
+			// return content of text nodes
+			// @TO-DO: return more than just firstchild?
+			if(node.firstChild && (node.firstChild.nodeType == 3 || node.firstChild.nodeType == 4)) {
+				return node.firstChild.nodeValue;
+			}
+			break;
+		case 2: /* Attribute */
+			return node.nodeValue;
+			break;
+		case 3: /* text node */
+			// fall through
+		case 4: /* CDATA section */
+			return node.nodeValue;
+			break;	
+	}
+	return null;
 };
 Freja.QueryEngine.prototype.set = function(document, expression, value) {
-	try {
-		var node = this._find(document, expression);
-		if(node)
-			node.nodeValue = value;
-	} catch(x) {
-		// text node not found. Might need to be created.
-		// try not to process field names that are not meant to be xpath expressions
-		if(expression.lastIndexOf('/') != -1) {
-			var nodeName = expression.substr(expression.lastIndexOf('/')+1);
-			if(nodeName.charAt(0)=='@') {
-				// trying to set a non-existing attribute. Let's create it.
-				var parentExpression =  expression.substring(0, expression.lastIndexOf('/'));
-				var pNode = this._find(document, parentExpression);
-				if(pNode) {
-					// this._find returns a text node
-					pNode = pNode.parentNode;
-					pNode.setAttribute(nodeName.substr(1),value);
-				}
+	var node = this._find(document, expression);
+	if(!node) {
+		// Could not evaluate expression.
+		// Check if we're trying to set a non-existent attribute
+		var nodeName = expression.substr(expression.lastIndexOf('/')+1);
+		if(nodeName.charAt(0)=='@') {
+			// Let's try to create the attribute.
+			var parentExpression =  expression.substring(0, expression.lastIndexOf('/'));
+			var pNode = this._find(document, parentExpression);
+			if(pNode) {				
+				pNode.setAttribute(nodeName.substr(1),value);
+				return;
 			}
-			// else parent element does not exist.. can't do anything
+			// else parent node non existent either, give up.
 		}
+		// not an attribute, give up.
+		throw new Error("Can't evaluate expression " + expression);
 	}
+
+	// Expression succesfully evaluated. Set content
+	switch(node.nodeType) {
+		case 1: /* element */
+			// @TO-DO: set more than just firstchild			
+			if(node.firstChild && (node.firstChild.nodeType == 3 || node.firstChild.nodeType == 4)) {
+				node.firstChild.nodeValue = value;
+			} else {
+				node.appendChild(document.createTextNode(value));
+			}
+			break;
+		case 2: /* Attribute */
+			node.nodeValue = value;
+			break;
+		case 3: /* text node */
+			// fall through
+		case 4: /* CDATA section */
+			node.nodeValue = value;
+			break;	
+	}
+	return ;
 };
 /**
   * XPath query engine.
   */
 Freja.QueryEngine.XPath = function() {};
 Freja.Class.extend(Freja.QueryEngine.XPath, Freja.QueryEngine);
-Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
-	var node = document.selectSingleNode(expression);
-	if (node && node.nodeType == 2) {
-		return node;
-	}
-	if (node && node.firstChild && node.firstChild.nodeType == 3) {
-		return node.firstChild;
-	}
-	if (node && node.firstChild && node.firstChild.nodeType == 4) {
-		return node.firstChild;
-	}
-
-	throw new Error("Can't evaluate expression " + expression);
-	return null;
+Freja.QueryEngine.XPath.prototype._find = function(document, expression) {	
+	var result = document.selectSingleNode(expression);	
+	return result;
 };
 /**
   * SimplePath
@@ -71,6 +93,7 @@ Freja.QueryEngine.XPath.prototype._find = function(document, expression) {
 Freja.QueryEngine.SimplePath = function() {};
 Freja.Class.extend(Freja.QueryEngine.SimplePath, Freja.QueryEngine);
 Freja.QueryEngine.SimplePath.prototype._find = function(document, expression) {
+	
 	if (!expression.match(/^[\d\w\/@\[\]=_\-']*$/)) {
 		throw new Error("Can't evaluate expression " + expression);
 	}

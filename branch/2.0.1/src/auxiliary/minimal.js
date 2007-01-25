@@ -334,6 +334,11 @@ Freja._aux.Deferred.prototype.addErrback = function(fncError) {
 	this.addCallbacks(null, fncError);
 };
 if (document.implementation && document.implementation.hasFeature("XPath", "3.0")) {
+	// Opera 9 XMLDocument Fix. Thanks to Chris D.
+	if(!XMLDocument) {
+	   var XMLDocument = Document;
+	}	
+
 	XMLDocument.prototype.selectNodes = function(sExpr, contextNode) {
 		var nsDoc = this;
 		var nsresolver = this.createNSResolver(this.documentElement);
@@ -383,10 +388,7 @@ if (document.implementation && document.implementation.hasFeature("XPath", "3.0"
 		}
 	};
 };
-// Opera 9 XMLDocument Fix. Thanks to Chris D.
-if(!XMLDocument) {
-   var XMLDocument = Document;
-}
+
 // Adapated From Sarissa
 // * @version 0.9.6.1
 // * @author: Manos Batsis, mailto: mbatsis at users full stop sourceforge full stop net

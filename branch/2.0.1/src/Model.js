@@ -40,7 +40,10 @@ Freja.Model.prototype.set = function(expression, value) {
 Freja.Model.prototype.updateFrom = function(view) {
 	var values = view.getValues();
 	for (var i = 0; i < values[0].length; ++i) {
-		this.set(values[0][i], values[1][i]);
+		// try not to process field names that are not meant to be xpath expressions
+		if(values[0][i].lastIndexOf('/') != -1) {		
+			this.set(values[0][i], values[1][i]);
+		}
 	}
 };
 /**

@@ -50,7 +50,6 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 
 			var trans = this.view._renderer.transform(model, this.view, this.xslParameters);
 			trans.addCallback(Freja._aux.bind(function(html) {
-				// this._destination.innerHTML = html;
 				this._destination.innerHTML = "";
 				this._destination.appendChild(html);
 			}, this.view));
