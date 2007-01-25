@@ -247,7 +247,8 @@ Freja._aux.transformXSL = function(xml, xsl, xslParameters) {
 	for (var paramName in xslParameters) {
 		processor.setParameter(null, paramName, xslParameters[paramName]);
 	}
-	return Freja._aux.serializeXML(processor.transformToDocument(xml));
+	// return Freja._aux.serializeXML(processor.transformToDocument(xml));
+	return processor.transformToDocument(xml);
 
 };
 /** cloneXMLDocument(document) : XMLDocument */
@@ -382,7 +383,10 @@ if (document.implementation && document.implementation.hasFeature("XPath", "3.0"
 		}
 	};
 };
-
+// Opera 9 XMLDocument Fix. Thanks to Chris D.
+if(!XMLDocument) {
+   var XMLDocument = Document;
+}
 // Adapated From Sarissa
 // * @version 0.9.6.1
 // * @author: Manos Batsis, mailto: mbatsis at users full stop sourceforge full stop net
@@ -444,4 +448,3 @@ if(typeof XSLTProcessor == 'undefined' && typeof ActiveXObject  != 'undefined') 
 	};
 
 }
-

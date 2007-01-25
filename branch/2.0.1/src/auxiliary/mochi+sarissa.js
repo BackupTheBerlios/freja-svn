@@ -82,8 +82,8 @@ Freja._aux.loadXML = function(text) {
 Freja._aux.transformXSL = function(xml, xsl) {
 	var processor = new XSLTProcessor();
 	processor.importStylesheet(xsl);
-	return Freja._aux.serializeXML(processor.transformToDocument(xml));
-
+	// return Freja._aux.serializeXML(processor.transformToDocument(xml));
+	return processor.transformToDocument(xml);
 };
 /** cloneXMLDocument(document) : XMLDocument */
 Freja._aux.cloneXMLDocument = function(xmlDoc) {
@@ -118,6 +118,10 @@ Freja._aux.cloneXMLDocument = function(xmlDoc) {
 	}
 	return clone;
 };
+/**  Opera 9 XMLDocument Fix. Thanks to Chris D.  */
+if(!XMLDocument) {
+   var XMLDocument = Document;
+}
 /** hasSupportForXSLT() : boolean */
 Freja._aux.hasSupportForXSLT = function() { return (typeof(XSLTProcessor) != "undefined"); };
 /** createQueryEngine() : Freja.QueryEngine */

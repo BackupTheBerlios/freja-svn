@@ -50,7 +50,9 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 
 			var trans = this.view._renderer.transform(model, this.view, this.xslParameters);
 			trans.addCallback(Freja._aux.bind(function(html) {
-				this._destination.innerHTML = html;
+				// this._destination.innerHTML = html;
+				this._destination.innerHTML = "";
+				this._destination.appendChild(html);
 			}, this.view));
 			trans.addCallback(Freja._aux.bind(function() {
 				Freja._aux.signal(this, "onrendercomplete", this._destination)
@@ -157,8 +159,9 @@ Freja.Class.extend(Freja.View.Renderer.XSLTransformer, Freja.View.Renderer);
 Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();
         try {
-		var html = Freja._aux.transformXSL(model.document, view.document, xslParameters);
-		if (!html) {
+		// var html = Freja._aux.transformXSL(model.document, view.document, xslParameters);
+		var dom = Freja._aux.transformXSL(model.document, view.document, xslParameters);
+		if (!dom) {
 			d.errback(new Error("XSL Transformation error."));
 		} else {
 			// fix empty textareas
@@ -167,8 +170,10 @@ Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, x
 			// (cedsav) don't remember all the details but method="xml" is the way to go.
 			// method="html" would output html not xhtml, plus I think it implies that
 			// you want to output a valid html document (with html, head and body tags).
-			html = html.replace(/<textarea([^>]*)\/>/gi,"<textarea $1></textarea>");
-			d.callback(html);
+			
+			// html = html.replace(/<textarea([^>]*)\/>/gi,"<textarea $1></textarea>");
+			
+			d.callback(dom);
 		}
 	} catch (ex) {
 		d.errback(ex);
