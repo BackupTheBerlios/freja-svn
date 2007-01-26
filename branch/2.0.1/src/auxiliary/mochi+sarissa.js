@@ -79,10 +79,15 @@ Freja._aux.loadXML = function(text) {
 	return (new DOMParser()).parseFromString(text, "text/xml");
 };
 /** transformXSL(XMLDocument, XSLDocument) : string */
-Freja._aux.transformXSL = function(xml, xsl) {
+Freja._aux.transformXSL = function(xml, xsl, xslParameters) {
 	var processor = new XSLTProcessor();
 	processor.importStylesheet(xsl);
-	// return Freja._aux.serializeXML(processor.transformToDocument(xml));
+	if(xslParameters) {
+		for (var paramName in xslParameters) {
+			processor.setParameter(null, paramName, xslParameters[paramName]);
+		}
+	}
+	 
 	return processor.transformToFragment(xml, window.document);
 };
 /** cloneXMLDocument(document) : XMLDocument */

@@ -158,21 +158,11 @@ Freja.Class.extend(Freja.View.Renderer.XSLTransformer, Freja.View.Renderer);
 Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();
         try {
-		// var html = Freja._aux.transformXSL(model.document, view.document, xslParameters);
-		var dom = Freja._aux.transformXSL(model.document, view.document, xslParameters);
-		if (!dom) {
+			var html = Freja._aux.transformXSL(model.document, view.document, xslParameters);
+		if (!html) {
 			d.errback(new Error("XSL Transformation error."));
 		} else {
-			// fix empty textareas
-			// Can't this be fixed by outputting as html rather than xml ?
-			// <xsl:output method="html" />
-			// (cedsav) don't remember all the details but method="xml" is the way to go.
-			// method="html" would output html not xhtml, plus I think it implies that
-			// you want to output a valid html document (with html, head and body tags).
-			
-			// html = html.replace(/<textarea([^>]*)\/>/gi,"<textarea $1></textarea>");
-			
-			d.callback(dom);
+			d.callback(html);
 		}
 	} catch (ex) {
 		d.errback(ex);

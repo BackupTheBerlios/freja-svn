@@ -1,8 +1,8 @@
 /***
 
-    Freja 2.0
+    Freja 2.0.1
 
-    Build $Thu, 25 Jan 2007 22:01:11 UTC$
+    Build $Fri, 26 Jan 2007 03:09:08 UTC$
 
     Target: mochi+sarissa
 
@@ -21,7 +21,7 @@ if (typeof(Freja) == "undefined") {
 	Freja = {};
 }
 Freja.NAME = "Freja";
-Freja.VERSION = "2.0";
+Freja.VERSION = "2.0.1";
 Freja.__repr__ = function () {
 	return "[" + this.NAME + " " + this.VERSION + "]";
 };
@@ -128,10 +128,15 @@ Freja._aux.loadXML = function(text) {
 	return (new DOMParser()).parseFromString(text, "text/xml");
 };
 /** transformXSL(XMLDocument, XSLDocument) : string */
-Freja._aux.transformXSL = function(xml, xsl) {
+Freja._aux.transformXSL = function(xml, xsl, xslParameters) {
 	var processor = new XSLTProcessor();
 	processor.importStylesheet(xsl);
-	// return Freja._aux.serializeXML(processor.transformToDocument(xml));
+	if(xslParameters) {
+		for (var paramName in xslParameters) {
+			processor.setParameter(null, paramName, xslParameters[paramName]);
+		}
+	}
+	 
 	return processor.transformToFragment(xml, window.document);
 };
 /** cloneXMLDocument(document) : XMLDocument */
@@ -830,21 +835,11 @@ Freja.Class.extend(Freja.View.Renderer.XSLTransformer, Freja.View.Renderer);
 Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();
         try {
-		// var html = Freja._aux.transformXSL(model.document, view.document, xslParameters);
-		var dom = Freja._aux.transformXSL(model.document, view.document, xslParameters);
-		if (!dom) {
+			var html = Freja._aux.transformXSL(model.document, view.document, xslParameters);
+		if (!html) {
 			d.errback(new Error("XSL Transformation error."));
 		} else {
-			// fix empty textareas
-			// Can't this be fixed by outputting as html rather than xml ?
-			// <xsl:output method="html" />
-			// (cedsav) don't remember all the details but method="xml" is the way to go.
-			// method="html" would output html not xhtml, plus I think it implies that
-			// you want to output a valid html document (with html, head and body tags).
-			
-			// html = html.replace(/<textarea([^>]*)\/>/gi,"<textarea $1></textarea>");
-			
-			d.callback(dom);
+			d.callback(html);
 		}
 	} catch (ex) {
 		d.errback(ex);
