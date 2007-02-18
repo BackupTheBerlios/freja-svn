@@ -339,4 +339,6 @@ if(_SARISSA_HAS_DOM_FEATURE && document.implementation.hasFeature("XPath", "3.0"
     };
     Sarissa.IS_ENABLED_SELECT_NODES = true;
 };
+if(_SARISSA_IS_IE)
+	 Sarissa.IS_ENABLED_SELECT_NODES = true;
 
