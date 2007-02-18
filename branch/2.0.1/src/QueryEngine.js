@@ -97,7 +97,7 @@ Freja.QueryEngine.SimplePath.prototype._find = function(document, expression) {
 	if (!expression.match(/^[\d\w\/@\[\]=_\-']*$/)) {
 		throw new Error("Can't evaluate expression " + expression);
 	}
-	var parts = expression.split(/\//);
+	var parts = expression.split("/");
 	var node = document;
 	var regAttr = new RegExp("^@([\\d\\w]*)");
 	var regOffset = new RegExp("^([@\\d\\w]*)\\[([\\d]*)\\]$");
