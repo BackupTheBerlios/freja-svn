@@ -66,6 +66,8 @@ Freja._aux.openXMLHttpRequest = function(method, url, async, user, pass) {
 	if (method == "POST" || method == "PUT") {
 		req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	}
+	// RoR/cakePHP Ajax request detection compatibility:
+	req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');	
 	return req;
 };
 /** sendXMLHttpRequest(req, sendContent) : Deferred */
@@ -73,7 +75,10 @@ Freja._aux.sendXMLHttpRequest = MochiKit.Async.sendXMLHttpRequest;
 /** xmlize(anyObject, objectName) : string */
 Freja._aux.xmlize = Sarissa.xmlize;
 /** serializeXML(node) : string */
-Freja._aux.serializeXML = Sarissa.serialize;
+Freja._aux.serializeXML = function(node) {
+	if (node.xml) return node.xml;
+	return (new XMLSerializer()).serializeToString(node);
+};
 /** loadXML(string) : XMLDocument */
 Freja._aux.loadXML = function(text) {
 	return (new DOMParser()).parseFromString(text, "text/xml");
