@@ -138,7 +138,14 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 		} catch (ex) {
 			d.errback(ex);
 		}
-		d.callback(document);
+		if(window.document.all) { 				
+			// Weird bug in IE6 when assets are loaded from local file system.
+			// Despite the async request, the document is loaded and the onload signal is sent 
+			// before the getModel function exits (giving no chance to attach a handler to onload).
+			// Using a 1ms timeout here fixes the problem.
+			setTimeout(function() { d.callback(document); }, 1);		
+		} else
+			d.callback(document);
 	};
 	try {
 		// Why using HTTP_METHOD_TUNNEL for a GET?
@@ -161,7 +168,7 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 				d.errback(new Error("Request failed:" + req.status));
 			});
 		} else {
-			if (req.status == 0 || req.status == 200 || req.status == 304) {
+			if (req.status == 0 || req.status == 200 ||  req.status == 201 ||  req.status == 304) {
 				handler(req);
 			} else {
 				d.errback(new Error("Request failed:" + req.status));
