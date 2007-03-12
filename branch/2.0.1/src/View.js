@@ -50,8 +50,12 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 
 			var trans = this.view._renderer.transform(model, this.view, this.xslParameters);
 			trans.addCallback(Freja._aux.bind(function(html) {
-				this._destination.innerHTML = "";
-				this._destination.appendChild(html);
+				if(typeof html == "string") {
+					this._destination.innerHTML = html;  // Remote XSLT (serialized HTML *not* XML)
+				} else {
+					this._destination.innerHTML = "";   
+					this._destination.appendChild(html); // Browser XSLT (DOM fragment)
+				}
 			}, this.view));
 			trans.addCallback(Freja._aux.bind(function() {
 				Freja._aux.signal(this, "onrendercomplete", this._destination)
