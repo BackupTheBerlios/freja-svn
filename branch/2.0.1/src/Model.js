@@ -48,7 +48,7 @@ Freja.Model.prototype.updateFrom = function(view) {
 };
 /**
   * Writes the model back to the remote service
-  * @returns MochiKit.Async.Deferred
+  * @returns Freja._aux.Deferred
   */
 Freja.Model.prototype.save = function() {
 	var url = this.url;
@@ -71,7 +71,7 @@ Freja.Model.prototype.save = function() {
 };
 /**
   * Deletes the model from the remote service
-  * @returns MochiKit.Async.Deferred
+  * @returns Freja._aux.Deferred
   */
 Freja.Model.prototype.remove = function() {
 	var url = this.url;
@@ -83,7 +83,7 @@ Freja.Model.prototype.remove = function() {
 	return Freja._aux.sendXMLHttpRequest(req);
 };
 /**
-  * @returns MochiKit.Async.Deferred
+  * @returns Freja._aux.Deferred
   */
 Freja.Model.prototype.reload = function() {
 	this.ready = false;

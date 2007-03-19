@@ -32,7 +32,7 @@ tests.test_View = function (t) {
 	};
 	view.render(pojo, out);
 
-	t.ok(out.innerHTML.toLowerCase().match("<p>plain old javascript object</p>"));
+	t.ok(out.innerHTML.toLowerCase().match("<p>plain old javascript object</p>"),"The rendered view should contain the text 'plain old javascript object'");
 
 	// test of form
 	var formView = Freja.AssetManager.getView("data/form-view.xsl");

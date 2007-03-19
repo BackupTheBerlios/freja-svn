@@ -1,9 +1,12 @@
 <?php
 $request_headers = apache_request_headers();
 if (isset($request_headers['Http-Method-Equivalent'])) {
-	$REQUEST_METHOD = $request_headers['Http-Method-Equivalent'];
+   $REQUEST_METHOD = $request_headers['Http-Method-Equivalent'];
+} elseif (isset($request_headers['http-method-equivalent'])) {
+// IE sends the Http-Method-Equivalent header in lowercase!
+    $REQUEST_METHOD = $request_headers['http-method-equivalent'];
 } else {
-	$REQUEST_METHOD = $_SERVER['REQUEST_METHOD'];
+   $REQUEST_METHOD = $_SERVER['REQUEST_METHOD'];
 }
 
 if ($REQUEST_METHOD == "PUT" || $REQUEST_METHOD == "POST") {

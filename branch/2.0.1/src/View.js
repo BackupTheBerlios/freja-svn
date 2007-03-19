@@ -15,7 +15,7 @@ Freja.View = function(url, renderer) {
   * @param    model            Freja.Model
   * @param    placeholder      string    If supplied, this will be used instead of the
   *                                      default placeholder.
-  * @returns MochiKit.Async.Deferred
+  * @returns Freja._aux.Deferred
   */
 Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 	if (typeof(placeholder) == "undefined") placeholder = this.placeholder;
@@ -69,7 +69,11 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 
 	var d = Freja._aux.createDeferred();
 	try {
-		this._destination = Freja._aux.getElement(placeholder);
+		if (typeof(placeholder) == "object") {
+			this._destination = placeholder;
+		} else {
+			this._destination = document.getElementById(placeholder);
+		}
 		// @todo    Is this a good idea ?
 		// Perhaps we should leave it to the programmer to do this.
 		this._destination.innerHTML = Freja.AssetManager.THROBBER_HTML;
@@ -157,7 +161,7 @@ Freja.View.Renderer = function() {};
 Freja.View.Renderer.XSLTransformer = function() {};
 Freja.Class.extend(Freja.View.Renderer.XSLTransformer, Freja.View.Renderer);
 /**
-  * @returns MochiKit.Async.Deferred
+  * @returns Freja._aux.Deferred
   */
 Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();
@@ -182,7 +186,7 @@ Freja.View.Renderer.RemoteXSLTransformer = function(url) {
 };
 Freja.Class.extend(Freja.View.Renderer.RemoteXSLTransformer, Freja.View.Renderer);
 /**
-  * @returns MochiKit.Async.Deferred
+  * @returns Freja._aux.Deferred
   */
 Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();

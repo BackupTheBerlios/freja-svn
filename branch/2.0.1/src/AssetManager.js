@@ -22,8 +22,8 @@ Freja.AssetManager.HTTP_REQUEST_TYPE = "async";
   * Both IE6 and FF1.5 are known to support the required HTTP methods, so
   * if theese are your target platform, you can disable tunneling.
   */
-// Freja.AssetManager.HTTP_METHOD_TUNNEL = null;
-Freja.AssetManager.HTTP_METHOD_TUNNEL = "Http-Method-Equivalent";
+//  Freja.AssetManager.HTTP_METHOD_TUNNEL = null;
+  Freja.AssetManager.HTTP_METHOD_TUNNEL = "Http-Method-Equivalent";
 /**
   * Set this url to provide remote xslt-transformation for browsers that
   * doesn't support it natively.
@@ -115,7 +115,7 @@ Freja.AssetManager.setCredentials = function(username, password) {
 	this._password = password;
 };
 /**
-  * @returns MochiKit.Async.Deferred
+  * @returns Freja._aux.Deferred
   */
 Freja.AssetManager.loadAsset = function(url, preventCaching) {
 	var match = /^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);

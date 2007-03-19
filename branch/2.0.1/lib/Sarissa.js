@@ -5,7 +5,7 @@
  * Sarissa is an ECMAScript library acting as a cross-browser wrapper for native XML APIs.
  * The library supports Gecko based browsers like Mozilla and Firefox,
  * Internet Explorer (5.5+ with MSXML3.0+), Konqueror, Safari and a little of Opera
- * @version 0.9.7.6
+ * @version @sarissa.version@
  * @author: Manos Batsis, mailto: mbatsis at users full stop sourceforge full stop net
  * ====================================================================
  * Licence
@@ -272,6 +272,8 @@ if(_SARISSA_IS_IE){
      * @argument value The new parameter value
      */
     XSLTProcessor.prototype.setParameter = function(nsURI, name, value){
+        // make value a zero length string if null to allow clearing
+        value = (value) ? value : "";
         // nsURI is optional but cannot be null 
         if(nsURI){
             this.processor.addParameter(name, value, nsURI);
@@ -306,9 +308,9 @@ if(_SARISSA_IS_IE){
         for(var nsURI in this.paramsSet){
             for(var name in this.paramsSet[nsURI]){
                 if(nsURI){
-                    this.processor.addParameter(name, null, nsURI);
+                    this.processor.addParameter(name, "", nsURI);
                 }else{
-                    this.processor.addParameter(name, null);
+                    this.processor.addParameter(name, "");
                 };
             };
         };
@@ -371,7 +373,7 @@ if(_SARISSA_IS_IE){
             // do nothing
         }// TODO: check if the new document has content before trying to copynodes, check  for error handling in DOM 3 LS
         else if(_SARISSA_HAS_DOM_FEATURE && window.Document && !Document.prototype.load && document.implementation.hasFeature('LS', '3.0')){
-            //Opera 9 may get the XPath branch which gives creates XMLDocument, therefore it doesn't reach here which is good
+    		//Opera 9 may get the XPath branch which gives creates XMLDocument, therefore it doesn't reach here which is good
             /**
             * <p>Factory method to obtain a new DOM Document object</p>
             * @argument sUri the namespace of the root node (if any)
@@ -430,31 +432,38 @@ if(!window.DOMParser){
 if((typeof(document.importNode) == "undefined") && _SARISSA_IS_IE){
     try{
         /**
-        * Implementation of importNode for the context window document in IE
+        * Implementation of importNode for the context window document in IE.
+        * If <code>oNode</code> is a TextNode, <code>bChildren</code> is ignored.
         * @param oNode the Node to import
         * @param bChildren whether to include the children of oNode
         * @returns the imported node for further use
         */
         document.importNode = function(oNode, bChildren){
             var tmp;
-            if(oNode.nodeName == "tbody" || oNode.nodeName == "tr"){
-                tmp = document.createElement("table");
+            if (oNode.nodeName=='#text') {
+                return document.createTextElement(oNode.data);
             }
-            else if(oNode.nodeName == "td"){
-                tmp = document.createElement("tr");
-            }
-            else if(oNode.nodeName == "option"){
-                tmp = document.createElement("select");
-            }
-            else{
-                tmp = document.createElement("div");
+            else {
+                if(oNode.nodeName == "tbody" || oNode.nodeName == "tr"){
+                    tmp = document.createElement("table");
+                }
+                else if(oNode.nodeName == "td"){
+                    tmp = document.createElement("tr");
+                }
+                else if(oNode.nodeName == "option"){
+                    tmp = document.createElement("select");
+                }
+                else{
+                    tmp = document.createElement("div");
+                };
+                if(bChildren){
+                    tmp.innerHTML = oNode.xml ? oNode.xml : oNode.outerHTML;
+                }else{
+                    tmp.innerHTML = oNode.xml ? oNode.cloneNode(false).xml : oNode.cloneNode(false).outerHTML;
+                };
+                return tmp.getElementsByTagName("*")[0];
             };
-            if(bChildren){
-                tmp.innerHTML = oNode.xml ? oNode.xml : oNode.outerHTML;
-            }else{
-                tmp.innerHTML = oNode.xml ? oNode.cloneNode(false).xml : oNode.cloneNode(false).outerHTML;
-            };
-            return tmp.getElementsByTagName("*")[0];
+            
         };
     }catch(e){ };
 };

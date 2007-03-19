@@ -1,0 +1,1 @@
+java -jar custom_rhino.jar -c lib/Freja.js > lib/Freja_pack.js 2>&1

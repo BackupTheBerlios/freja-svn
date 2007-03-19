@@ -43,7 +43,50 @@ Freja._aux = {};
 /** bind(func, self) : function */
 Freja._aux.bind = MochiKit.Base.bind;
 /** formContents(elem) : Array */
-Freja._aux.formContents = MochiKit.DOM.formContents;
+Freja._aux.formContents = function(elem) {
+	if (!elem) elem = document;
+	var names = [];
+	var values = [];
+	var inputs = elem.getElementsByTagName("INPUT");
+	for (var i = 0; i < inputs.length; ++i) {
+		var input = inputs[i];
+		if (input.name) {
+			if (input.type == "radio" || input.type == "checkbox") {
+				if (input.checked) {
+					names.push(input.name);
+					values.push(input.value);
+				} else {
+					names.push(input.name);
+					values.push("");
+				}
+			} else {
+				names.push(input.name);
+				values.push(input.value);
+			}
+		}
+	}
+	var textareas = elem.getElementsByTagName("TEXTAREA");
+	for (var i = 0; i < textareas.length; ++i) {
+		var input = textareas[i];
+		if (input.name) {
+			names.push(input.name);
+			values.push(input.value);
+		}
+	}
+	var selects = elem.getElementsByTagName("SELECT");
+	for (var i = 0; i < selects.length; ++i) {
+		var input = selects[i];
+		if (input.name) {
+			if (input.selectedIndex >= 0) {
+				var opt = input.options[input.selectedIndex];
+				names.push(input.name);
+				values.push((opt.value) ? opt.value : "");
+			}
+		}
+	}
+	return [names, values];
+};
+
 /** getElement(id) : HTMLElement */
 Freja._aux.getElement = MochiKit.DOM.getElement;
 
@@ -89,7 +132,7 @@ Freja._aux.transformXSL = function(xml, xsl, xslParameters) {
 	processor.importStylesheet(xsl);
 	if(xslParameters) {
 		for (var paramName in xslParameters) {
-			processor.setParameter(null, paramName, xslParameters[paramName]);
+			processor.setParameter("", paramName, xslParameters[paramName]);
 		}
 	}
 	 
