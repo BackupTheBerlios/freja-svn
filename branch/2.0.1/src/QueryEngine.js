@@ -64,7 +64,8 @@ Freja.QueryEngine.prototype.set = function(document, expression, value) {
 			if(node.firstChild && (node.firstChild.nodeType == 3 || node.firstChild.nodeType == 4)) {
 				node.firstChild.nodeValue = value;
 			} else {
-				node.appendChild(document.createTextNode(value));
+				if(value!="") // prevent a subsequent IE7/MSXML3 crash in view rendering.
+					node.appendChild(document.createTextNode(value));
 			}
 			break;
 		case 2: /* Attribute */
