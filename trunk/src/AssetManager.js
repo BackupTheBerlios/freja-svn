@@ -22,8 +22,8 @@ Freja.AssetManager.HTTP_REQUEST_TYPE = "async";
   * Both IE6 and FF1.5 are known to support the required HTTP methods, so
   * if theese are your target platform, you can disable tunneling.
   */
-// Freja.AssetManager.HTTP_METHOD_TUNNEL = null;
-Freja.AssetManager.HTTP_METHOD_TUNNEL = "Http-Method-Equivalent";
+//  Freja.AssetManager.HTTP_METHOD_TUNNEL = null;
+  Freja.AssetManager.HTTP_METHOD_TUNNEL = "Http-Method-Equivalent";
 /**
   * Set this url to provide remote xslt-transformation for browsers that
   * doesn't support it natively.
@@ -115,7 +115,7 @@ Freja.AssetManager.setCredentials = function(username, password) {
 	this._password = password;
 };
 /**
-  * @returns MochiKit.Async.Deferred
+  * @returns Freja._aux.Deferred
   */
 Freja.AssetManager.loadAsset = function(url, preventCaching) {
 	var match = /^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
@@ -138,7 +138,14 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 		} catch (ex) {
 			d.errback(ex);
 		}
-		d.callback(document);
+		if(window.document.all) { 				
+			// Weird bug in IE6 when assets are loaded from local file system.
+			// Despite the async request, the document is loaded and the onload signal is sent 
+			// before the getModel function exits (giving no chance to attach a handler to onload).
+			// Using a 1ms timeout here fixes the problem.
+			setTimeout(function() { d.callback(document); }, 1);		
+		} else
+			d.callback(document);
 	};
 	try {
 		// Why using HTTP_METHOD_TUNNEL for a GET?
@@ -161,7 +168,7 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 				d.errback(new Error("Request failed:" + req.status));
 			});
 		} else {
-			if (req.status == 0 || req.status == 200 || req.status == 304) {
+			if (req.status == 0 || req.status == 200 ||  req.status == 201 ||  req.status == 304) {
 				handler(req);
 			} else {
 				d.errback(new Error("Request failed:" + req.status));

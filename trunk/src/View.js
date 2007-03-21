@@ -15,7 +15,7 @@ Freja.View = function(url, renderer) {
   * @param    model            Freja.Model
   * @param    placeholder      string    If supplied, this will be used instead of the
   *                                      default placeholder.
-  * @returns MochiKit.Async.Deferred
+  * @returns Freja._aux.Deferred
   */
 Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 	if (typeof(placeholder) == "undefined") placeholder = this.placeholder;
@@ -50,7 +50,12 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 
 			var trans = this.view._renderer.transform(model, this.view, this.xslParameters);
 			trans.addCallback(Freja._aux.bind(function(html) {
-				this._destination.innerHTML = html;
+				if(typeof html == "string") {
+					this._destination.innerHTML = html;  // Remote XSLT (serialized HTML *not* XML)
+				} else {
+					this._destination.innerHTML = "";   
+					this._destination.appendChild(html); // Browser XSLT (DOM fragment)
+				}
 			}, this.view));
 			trans.addCallback(Freja._aux.bind(function() {
 				Freja._aux.signal(this, "onrendercomplete", this._destination)
@@ -64,7 +69,11 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 
 	var d = Freja._aux.createDeferred();
 	try {
-		this._destination = Freja._aux.getElement(placeholder);
+		if (typeof(placeholder) == "object") {
+			this._destination = placeholder;
+		} else {
+			this._destination = document.getElementById(placeholder);
+		}
 		// @todo    Is this a good idea ?
 		// Perhaps we should leave it to the programmer to do this.
 		this._destination.innerHTML = Freja.AssetManager.THROBBER_HTML;
@@ -152,22 +161,15 @@ Freja.View.Renderer = function() {};
 Freja.View.Renderer.XSLTransformer = function() {};
 Freja.Class.extend(Freja.View.Renderer.XSLTransformer, Freja.View.Renderer);
 /**
-  * @returns MochiKit.Async.Deferred
+  * @returns Freja._aux.Deferred
   */
 Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();
         try {
-		var html = Freja._aux.transformXSL(model.document, view.document, xslParameters);
+			var html = Freja._aux.transformXSL(model.document, view.document, xslParameters);
 		if (!html) {
 			d.errback(new Error("XSL Transformation error."));
 		} else {
-			// fix empty textareas
-			// Can't this be fixed by outputting as html rather than xml ?
-			// <xsl:output method="html" />
-			// (cedsav) don't remember all the details but method="xml" is the way to go.
-			// method="html" would output html not xhtml, plus I think it implies that
-			// you want to output a valid html document (with html, head and body tags).
-			html = html.replace(/<textarea([^>]*)\/>/gi,"<textarea $1></textarea>");
 			d.callback(html);
 		}
 	} catch (ex) {
@@ -184,7 +186,7 @@ Freja.View.Renderer.RemoteXSLTransformer = function(url) {
 };
 Freja.Class.extend(Freja.View.Renderer.RemoteXSLTransformer, Freja.View.Renderer);
 /**
-  * @returns MochiKit.Async.Deferred
+  * @returns Freja._aux.Deferred
   */
 Freja.View.Renderer.RemoteXSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();

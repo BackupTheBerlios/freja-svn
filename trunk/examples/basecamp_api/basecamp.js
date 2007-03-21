@@ -6,6 +6,7 @@
 	
 	// Constants
 	var BASECAMP_URL = "http://freja.projectpath.com";	
+	Freja.AssetManager.HTTP_METHOD_TUNNEL = null;
 
 	// 3rd party libraries.
 	var helpers = new wHELPERS();	// misc. javascript functions
@@ -42,11 +43,19 @@
 			currentProjectId = projects.get("//project[status='active']/id");				
 		else 
 			currentProjectId = projectId;
-			
-		todos      = getModel("models/todos.xml"); 		// Snapshot. Live data: getModel(addProxyToUrl("/projects/"+currentProjectId+"/todos/lists"));									
-		messages   = getModel("models/posts.xml");  // getModel(addProxyToUrl("/projects/"+currentProjectId+"/msg/archive"));	 // 		// Snapshot.
-		milestones = getModel("models/milestones.xml"); // Snapshot. Live data: getModel(addProxyToUrl("/projects/"+currentProjectId+"/milestones/list"));
-		categories = getModel("models/categories.xml"); // Snapshot. Live data: getModel(addProxyToUrl("/projects/"+currentProjectId+"/post_categories"));
+
+		// snapshots (used for development only)	
+	//	todos      = getModel("models/todos.xml"); 		
+	//	messages   = getModel("models/posts.xml");  
+	//	milestones = getModel("models/milestones.xml");
+	//	categories = getModel("models/categories.xml");
+
+		// Live data
+		todos      = getModel(addProxyToUrl("/projects/"+currentProjectId+"/todos/lists"));									
+		messages   = getModel(addProxyToUrl("/projects/"+currentProjectId+"/msg/archive"));	 // 		
+		milestones = getModel(addProxyToUrl("/projects/"+currentProjectId+"/milestones/list"));
+		categories = getModel(addProxyToUrl("/projects/"+currentProjectId+"/post_categories"));
+		
 		requestTemplate = getModel("models/new_request.xml");   // xml wrapper for posted data
 		messageTemplate = getModel("models/new_post.xml");      // skeleton for new data
 		commentTemplate = getModel("models/new_comment.xml");   // skeleton for new data
