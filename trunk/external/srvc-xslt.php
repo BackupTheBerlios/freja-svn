@@ -1,4 +1,8 @@
 <?php
+	// XSL Transformation Service for Freja
+	// PHP4.0 Version 1.0
+
+
 	function error_handler($errno, $errstr, $errfile, $errline) {
 		if (error_reporting() == 0) {
 			return;
@@ -9,8 +13,7 @@
 		}
 		error_log($errstr."\n", 3, $filename);
 		header("HTTP/1.0 500 Internal Error");
-		//header('Content-Type: text/xml');
-		/*echo "<?xml version='1.0' ?><error>".$errstr."</error>";*/
+		header('Content-Type: text/plain; charset="UTF-8"');
 		echo "Error: ".$errstr;
 		exit;
 	}
@@ -22,20 +25,7 @@
 		set_exception_handler('exception_handler');
 	}
 
-	// XSL Transformation Service for Freja
-	// PHP4.0 Version 1.0
-
-	// Freja - a javascript Model-View-Controller Framework geared toward Zero-Latency Web Applications
-	// v1.0 Beta - Dec. 2005
-	// Copyright (c) 2005 Cédric Savarese <pro@4213miles.com>
-	// This software is licensed under the CC-GNU LGPL <http://creativecommons.org/licenses/LGPL/2.1/>
-	// Documentation : http://www.csscripting.com/freja
-
-
 	if (isset($_POST['xmlData']) && isset($_POST['xslFile'])) {
-//		if (get_magic_quotes_gpc()) {
-//			array_map('stripslashes', $_POST);
-//		}
 		$root = realpath(dirname(__FILE__)."/../");
 		$xmlData = stripslashes($_POST['xmlData']);
 		$path = isset($_GET['path']) ? ("/".stripslashes($_GET['path'])) : "";
@@ -66,7 +56,7 @@
 			$xhtmlOuput = str_replace('<?xml version="1.0"?>','',$xslDoc->result_dump_mem($transformedData));
 
 			header("HTTP/1.0 200 Ok");
-			header('Content-Type: text/xml');
+			header('Content-Type: text/xml, charset="UTF-8"');
 			echo $xhtmlOuput;
 
 		} else {
