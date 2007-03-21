@@ -1145,3 +1145,10 @@ Freja._aux.Deferred.prototype.addCallback = function(fncOK) {
 Freja._aux.Deferred.prototype.addErrback = function(fncError) {
 	this.addCallbacks(null, fncError);
 };
+Freja._aux.importNode = function(document, node, deep) {
+	if(typeof deep =='undefined') deep = true;
+	if(document.importNode)
+		return document.importNode(node,deep);
+	else
+		return node.cloneNode(deep);
+}

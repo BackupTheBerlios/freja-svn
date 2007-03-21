@@ -185,7 +185,13 @@ Freja._aux.createQueryEngine = function() {
 		return new Freja.QueryEngine.SimplePath();
 	}
 };
-
+Freja._aux.importNode = function(document, node, deep) {
+	if(typeof deep =='undefined') deep = true;
+	if(document.importNode)
+		return document.importNode(node,deep);
+	else
+		return node.cloneNode(deep);
+}
 
 /**
  * ====================================================================

@@ -2,7 +2,7 @@
 
     Freja 2.1
 
-    Build $Wed, 21 Mar 2007 15:05:31 UTC$
+    Build $Wed, 21 Mar 2007 20:26:12 UTC$
 
     Target: minimal
 
@@ -1194,7 +1194,13 @@ Freja._aux.Deferred.prototype.addCallback = function(fncOK) {
 Freja._aux.Deferred.prototype.addErrback = function(fncError) {
 	this.addCallbacks(null, fncError);
 };
-
+Freja._aux.importNode = function(document, node, deep) {
+	if(typeof deep =='undefined') deep = true;
+	if(document.importNode)
+		return document.importNode(node,deep);
+	else
+		return node.cloneNode(deep);
+}
 /**
   * The baseclass for queryengines
   * @abstract
