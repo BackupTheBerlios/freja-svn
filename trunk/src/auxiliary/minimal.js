@@ -990,15 +990,17 @@ Freja._aux.connect = function(src, signal, fnc) {
 Freja._aux.signal = function(src, signal) {
 
 	try {
-		var sigs = src._signals[signal];
-		var args = [];
-		for (var i=2; i < arguments.length; i++) {
-			args.push(arguments[i]);
-		}
-		for (var i=0; i < sigs.length; i++) {
-			try {
-				sigs[i].apply(src, args);
-			} catch (e) { /* squelch */ }
+		if(src._signals && src._signals[signal]) {
+			var sigs = src._signals[signal];
+			var args = [];
+			for (var i=2; i < arguments.length; i++) {
+				args.push(arguments[i]);
+			}
+			for (var i=0; i < sigs.length; i++) {
+				try {
+					sigs[i].apply(src, args);
+				} catch (e) { /* squelch */ }
+			}
 		}
 	} catch (e) { /* squelch */ }
 };

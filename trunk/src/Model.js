@@ -42,7 +42,12 @@ Freja.Model.prototype.updateFrom = function(view) {
 	for (var i = 0; i < values[0].length; ++i) {
 		// try not to process field names that are not meant to be xpath expressions
 		if(values[0][i].lastIndexOf('/') != -1) {		
-			this.set(values[0][i], values[1][i]);
+			try {
+				this.set(values[0][i], values[1][i]);
+			} catch(x) {
+				// couldn't set the value.
+				// @TODO: Throw new Error.
+			}
 		}
 	}
 };

@@ -1,8 +1,8 @@
 /***
 
-    Freja 2.1
+    Freja 2.1.1
 
-    Build $Wed, 21 Mar 2007 20:26:12 UTC$
+    Build $Thu, 29 Mar 2007 20:39:48 UTC$
 
     Target: minimal
 
@@ -21,7 +21,7 @@ if (typeof(Freja) == "undefined") {
 	Freja = {};
 }
 Freja.NAME = "Freja";
-Freja.VERSION = "2.1";
+Freja.VERSION = "2.1.1";
 Freja.__repr__ = function () {
 	return "[" + this.NAME + " " + this.VERSION + "]";
 };
@@ -1039,15 +1039,17 @@ Freja._aux.connect = function(src, signal, fnc) {
 Freja._aux.signal = function(src, signal) {
 
 	try {
-		var sigs = src._signals[signal];
-		var args = [];
-		for (var i=2; i < arguments.length; i++) {
-			args.push(arguments[i]);
-		}
-		for (var i=0; i < sigs.length; i++) {
-			try {
-				sigs[i].apply(src, args);
-			} catch (e) { /* squelch */ }
+		if(src._signals && src._signals[signal]) {
+			var sigs = src._signals[signal];
+			var args = [];
+			for (var i=2; i < arguments.length; i++) {
+				args.push(arguments[i]);
+			}
+			for (var i=0; i < sigs.length; i++) {
+				try {
+					sigs[i].apply(src, args);
+				} catch (e) { /* squelch */ }
+			}
 		}
 	} catch (e) { /* squelch */ }
 };
@@ -1402,7 +1404,11 @@ Freja.Model.prototype.updateFrom = function(view) {
 	for (var i = 0; i < values[0].length; ++i) {
 		// try not to process field names that are not meant to be xpath expressions
 		if(values[0][i].lastIndexOf('/') != -1) {		
-			this.set(values[0][i], values[1][i]);
+			try {
+				this.set(values[0][i], values[1][i]);
+			} catch(x) {
+				// couldn't set the value.
+			}
 		}
 	}
 };
@@ -1549,8 +1555,14 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 			trans.addCallback(Freja._aux.bind(function() {
 				Freja._aux.signal(this, "onrendercomplete", this._destination)
 			}, this.view));
-			trans.addCallback(this.deferred.callback);
-			trans.addErrback(this.deferred.errback);
+			trans.addCallback(Freja._aux.bind(
+				function() { 
+					this.deferred.callback();
+				}, this));
+			trans.addErrback(Freja._aux.bind(
+				function(ex) { 
+					this.deferred.errback(ex);
+				}, this));
 		} catch (ex) {
 			this.deferred.errback(ex);
 		}
@@ -1654,6 +1666,7 @@ Freja.Class.extend(Freja.View.Renderer.XSLTransformer, Freja.View.Renderer);
   */
 Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();
+       
         try {
 			var html = Freja._aux.transformXSL(model.document, view.document, xslParameters);
 		if (!html) {

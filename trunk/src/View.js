@@ -60,8 +60,14 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 			trans.addCallback(Freja._aux.bind(function() {
 				Freja._aux.signal(this, "onrendercomplete", this._destination)
 			}, this.view));
-			trans.addCallback(this.deferred.callback);
-			trans.addErrback(this.deferred.errback);
+			trans.addCallback(Freja._aux.bind(
+				function() { 
+					this.deferred.callback();
+				}, this));
+			trans.addErrback(Freja._aux.bind(
+				function(ex) { 
+					this.deferred.errback(ex);
+				}, this));
 		} catch (ex) {
 			this.deferred.errback(ex);
 		}
@@ -165,6 +171,7 @@ Freja.Class.extend(Freja.View.Renderer.XSLTransformer, Freja.View.Renderer);
   */
 Freja.View.Renderer.XSLTransformer.prototype.transform = function(model, view, xslParameters) {
         var d = Freja._aux.createDeferred();
+       
         try {
 			var html = Freja._aux.transformXSL(model.document, view.document, xslParameters);
 		if (!html) {

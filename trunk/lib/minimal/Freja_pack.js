@@ -5,7 +5,7 @@ if(typeof (Freja)=="undefined"){
 Freja={};
 }
 Freja.NAME="Freja";
-Freja.VERSION="2.1";
+Freja.VERSION="2.1.1";
 Freja.__repr__=function(){
 return "["+this.NAME+" "+this.VERSION+"]";
 };
@@ -644,6 +644,7 @@ src._signals[_8a].push(fnc);
 };
 Freja._aux.signal=function(src,_93){
 try{
+if(src._signals&&src._signals[_93]){
 var _94=src._signals[_93];
 var _95=[];
 for(var i=2;i<arguments.length;i++){
@@ -654,6 +655,7 @@ try{
 _94[i].apply(src,_95);
 }
 catch(e){
+}
 }
 }
 }
@@ -967,7 +969,11 @@ Freja.Model.prototype.updateFrom=function(_dd){
 var _de=_dd.getValues();
 for(var i=0;i<_de[0].length;++i){
 if(_de[0][i].lastIndexOf("/")!=-1){
+try{
 this.set(_de[0][i],_de[1][i]);
+}
+catch(x){
+}
 }
 }
 };
@@ -1082,8 +1088,12 @@ this._destination.appendChild(_fe);
 _fd.addCallback(Freja._aux.bind(function(){
 Freja._aux.signal(this,"onrendercomplete",this._destination);
 },this.view));
-_fd.addCallback(this.deferred.callback);
-_fd.addErrback(this.deferred.errback);
+_fd.addCallback(Freja._aux.bind(function(){
+this.deferred.callback();
+},this));
+_fd.addErrback(Freja._aux.bind(function(ex){
+this.deferred.errback(ex);
+},this));
 }
 catch(ex){
 this.deferred.errback(ex);
@@ -1105,49 +1115,49 @@ d.errback(ex);
 }
 return d;
 };
-Freja.View.prototype._connectBehavior=function(_101){
+Freja.View.prototype._connectBehavior=function(_102){
 try{
-var _102=function(node,_104,_105){
-Freja._aux.connect(node,_104,Freja._aux.bind(function(e){
-var _107=false;
+var _103=function(node,_105,_106){
+Freja._aux.connect(node,_105,Freja._aux.bind(function(e){
+var _108=false;
 try{
-_107=_105(this);
+_108=_106(this);
 }
 catch(ex){
 throw new Error("An error ocurred in user handler.\n"+ex.message);
 }
 finally{
-if(!_107){
+if(!_108){
 e.stop();
 }
 }
 },node));
 };
-var _108=function(node,_10a){
+var _109=function(node,_10b){
 for(var i=0,c=node.childNodes,l=c.length;i<l;++i){
-var _10c=c[i];
-if(_10c.nodeType==1){
-if(_10c.className){
-var _10d=_10c.className.split(" ");
-for(var j=0;j<_10d.length;j++){
-var _10f=_10a[_10d[j]];
-if(_10f){
-for(var _110 in _10f){
-if(_110=="init"){
-_10f.init(_10c);
+var _10d=c[i];
+if(_10d.nodeType==1){
+if(_10d.className){
+var _10e=_10d.className.split(" ");
+for(var j=0;j<_10e.length;j++){
+var _110=_10b[_10e[j]];
+if(_110){
+for(var _111 in _110){
+if(_111=="init"){
+_110.init(_10d);
 }else{
-_102(_10c,_110,_10f[_110]);
+_103(_10d,_111,_110[_111]);
 }
 }
 }
 }
 }
-_108(_10c,_10a);
+_109(_10d,_10b);
 }
 }
 };
 for(var ids in this.behaviors){
-_108(_101,this.behaviors);
+_109(_102,this.behaviors);
 break;
 }
 }
@@ -1163,10 +1173,10 @@ Freja.View.Renderer=function(){
 Freja.View.Renderer.XSLTransformer=function(){
 };
 Freja.Class.extend(Freja.View.Renderer.XSLTransformer,Freja.View.Renderer);
-Freja.View.Renderer.XSLTransformer.prototype.transform=function(_112,view,_114){
+Freja.View.Renderer.XSLTransformer.prototype.transform=function(_113,view,_115){
 var d=Freja._aux.createDeferred();
 try{
-var html=Freja._aux.transformXSL(_112.document,view.document,_114);
+var html=Freja._aux.transformXSL(_113.document,view.document,_115);
 if(!html){
 d.errback(new Error("XSL Transformation error."));
 }else{
@@ -1182,16 +1192,16 @@ Freja.View.Renderer.RemoteXSLTransformer=function(url){
 this.url=url;
 };
 Freja.Class.extend(Freja.View.Renderer.RemoteXSLTransformer,Freja.View.Renderer);
-Freja.View.Renderer.RemoteXSLTransformer.prototype.transform=function(_118,view,_11a){
+Freja.View.Renderer.RemoteXSLTransformer.prototype.transform=function(_119,view,_11b){
 var d=Freja._aux.createDeferred();
-var _11c=view.url;
-var _11d="xslFile="+encodeURIComponent(_11c)+"&xmlData="+encodeURIComponent(Freja._aux.serializeXML(_118.document));
-var _11e="";
-for(var _11f in _11a){
-_11e+=encodeURIComponent(_11f+","+_11a[_11f]);
+var _11d=view.url;
+var _11e="xslFile="+encodeURIComponent(_11d)+"&xmlData="+encodeURIComponent(Freja._aux.serializeXML(_119.document));
+var _11f="";
+for(var _120 in _11b){
+_11f+=encodeURIComponent(_120+","+_11b[_120]);
 }
-if(_11e.length>0){
-_11d=_11d+"&xslParam="+_11e;
+if(_11f.length>0){
+_11e=_11e+"&xslParam="+_11f;
 }
 var req=Freja.AssetManager.openXMLHttpRequest("POST",Freja.AssetManager.XSLT_SERVICE_URL);
 req.onreadystatechange=function(){
@@ -1203,7 +1213,7 @@ d.errback(req.responseText);
 }
 }
 };
-req.send(_11d);
+req.send(_11e);
 return d;
 };
 Freja.UndoHistory=function(){
@@ -1212,40 +1222,40 @@ this.maxLength=5;
 this._position=0;
 this._undoSteps=0;
 };
-Freja.UndoHistory.prototype.add=function(_121){
-var _122=this._position%this.maxLength;
-var _123=_121.document;
-this.cache[_122]={};
-this.cache[_122].model=_121;
-this.cache[_122].document=Freja._aux.cloneXMLDocument(_123);
-if(!this.cache[_122].document){
+Freja.UndoHistory.prototype.add=function(_122){
+var _123=this._position%this.maxLength;
+var _124=_122.document;
+this.cache[_123]={};
+this.cache[_123].model=_122;
+this.cache[_123].document=Freja._aux.cloneXMLDocument(_124);
+if(!this.cache[_123].document){
 throw new Error("Couldn't add to history.");
 }else{
 this._position++;
-var _124=_122;
+var _125=_123;
 while(this._undoSteps>0){
-_124=(_124+1)%this.maxLength;
-this.cache[_124]={};
+_125=(_125+1)%this.maxLength;
+this.cache[_125]={};
 this._undoSteps--;
 }
-return _122;
+return _123;
 }
 };
-Freja.UndoHistory.prototype.undo=function(_125){
+Freja.UndoHistory.prototype.undo=function(_126){
 if(this._undoSteps<this.cache.length){
 this._undoSteps++;
 this._position--;
 if(this._position<0){
 this._position=this.maxLength-1;
 }
-var _126=this.cache[this._position].model;
+var _127=this.cache[this._position].model;
 if(this.cache[this._position].document){
-_126.document=this.cache[this._position].document;
+_127.document=this.cache[this._position].document;
 }else{
 throw new Error("The model's DOMDocument wasn't properly copied into the history");
 }
-if(typeof (_125)!="undefined"&&_125>1){
-this.undo(_125-1);
+if(typeof (_126)!="undefined"&&_126>1){
+this.undo(_126-1);
 }
 }else{
 throw new Error("Nothing to undo");
@@ -1255,8 +1265,8 @@ Freja.UndoHistory.prototype.redo=function(){
 if(this._undoSteps>0){
 this._undoSteps--;
 this._position=(this._position+1)%this.maxLength;
-var _127=this.cache[this._position].model;
-_127.document=this.cache[this._position].document;
+var _128=this.cache[this._position].model;
+_128.document=this.cache[this._position].document;
 }else{
 throw new Error("Nothing to redo");
 }
@@ -1292,12 +1302,12 @@ return this.models[i];
 }
 }
 var m=new Freja.Model(url,Freja._aux.createQueryEngine());
-var _12b=Freja._aux.bind(function(_12c){
-this.document=_12c;
+var _12c=Freja._aux.bind(function(_12d){
+this.document=_12d;
 this.ready=true;
 Freja._aux.signal(this,"onload");
 },m);
-this.loadAsset(url,true).addCallbacks(_12b,Freja.AssetManager.onerror);
+this.loadAsset(url,true).addCallbacks(_12c,Freja.AssetManager.onerror);
 this.models.push(m);
 return m;
 };
@@ -1308,46 +1318,46 @@ return this.views[i];
 }
 }
 var v=new Freja.View(url,this.createRenderer());
-var _130=Freja._aux.bind(function(_131){
-this.document=_131;
+var _131=Freja._aux.bind(function(_132){
+this.document=_132;
 this.ready=true;
 Freja._aux.signal(this,"onload");
 },v);
-this.loadAsset(url,false).addCallbacks(_130,Freja.AssetManager.onerror);
+this.loadAsset(url,false).addCallbacks(_131,Freja.AssetManager.onerror);
 this.views.push(v);
 return v;
 };
-Freja.AssetManager.openXMLHttpRequest=function(_132,url){
-var _134=null;
-if(Freja.AssetManager.HTTP_METHOD_TUNNEL&&_132!="GET"&&_132!="POST"){
-_134=_132;
-_132="POST";
+Freja.AssetManager.openXMLHttpRequest=function(_133,url){
+var _135=null;
+if(Freja.AssetManager.HTTP_METHOD_TUNNEL&&_133!="GET"&&_133!="POST"){
+_135=_133;
+_133="POST";
 }
-var req=Freja._aux.openXMLHttpRequest(_132,url,Freja.AssetManager.HTTP_REQUEST_TYPE=="async",Freja.AssetManager._username,Freja.AssetManager._password);
-if(_134){
-req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL,_134);
+var req=Freja._aux.openXMLHttpRequest(_133,url,Freja.AssetManager.HTTP_REQUEST_TYPE=="async",Freja.AssetManager._username,Freja.AssetManager._password);
+if(_135){
+req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL,_135);
 }
 return req;
 };
-Freja.AssetManager.setCredentials=function(_136,_137){
-this._username=_136;
-this._password=_137;
+Freja.AssetManager.setCredentials=function(_137,_138){
+this._username=_137;
+this._password=_138;
 };
-Freja.AssetManager.loadAsset=function(url,_139){
-var _13a=/^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
-if(_13a){
-url=_13a[1]+url;
+Freja.AssetManager.loadAsset=function(url,_13a){
+var _13b=/^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
+if(_13b){
+url=_13b[1]+url;
 }
 var d=Freja._aux.createDeferred();
-var _13c=function(_13d){
+var _13d=function(_13e){
 try{
-if(_13d.responseText==""){
+if(_13e.responseText==""){
 throw new Error("Empty response.");
 }
-if(_13d.responseXML.xml==""){
-var _13e=Freja._aux.loadXML(_13d.responseText);
+if(_13e.responseXML.xml==""){
+var _13f=Freja._aux.loadXML(_13e.responseText);
 }else{
-var _13e=_13d.responseXML;
+var _13f=_13e.responseXML;
 }
 }
 catch(ex){
@@ -1355,14 +1365,14 @@ d.errback(ex);
 }
 if(window.document.all){
 setTimeout(function(){
-d.callback(_13e);
+d.callback(_13f);
 },1);
 }else{
-d.callback(_13e);
+d.callback(_13f);
 }
 };
 try{
-if(_139&&Freja.AssetManager.HTTP_METHOD_TUNNEL){
+if(_13a&&Freja.AssetManager.HTTP_METHOD_TUNNEL){
 var req=Freja._aux.openXMLHttpRequest("POST",url,Freja.AssetManager.HTTP_REQUEST_TYPE=="async",Freja.AssetManager._username,Freja.AssetManager._password);
 req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL,"GET");
 req.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
@@ -1371,12 +1381,12 @@ var req=Freja._aux.openXMLHttpRequest("GET",url,Freja.AssetManager.HTTP_REQUEST_
 }
 var comm=Freja._aux.sendXMLHttpRequest(req);
 if(Freja.AssetManager.HTTP_REQUEST_TYPE=="async"){
-comm.addCallbacks(_13c,function(req){
+comm.addCallbacks(_13d,function(req){
 d.errback(new Error("Request failed:"+req.status));
 });
 }else{
 if(req.status==0||req.status==200||req.status==201||req.status==304){
-_13c(req);
+_13d(req);
 }else{
 d.errback(new Error("Request failed:"+req.status));
 }
