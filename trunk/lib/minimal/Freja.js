@@ -1028,19 +1028,16 @@ Freja._aux.connect = function(src, signal, fnc) {
 	if (!src._signals[signal]) {
 		src._signals[signal] = [];
 	}
-	// checks if the callback has already been registered with the same function  (Thx to Chris D)
-	for(var item=0; item < src._signals[signal].length;item++) {
-        if(src._signals[signal][item].toString() == fnc.toString()) return;
-    } 
-    
-	src._signals[signal].push(fnc);
+	
+ 	src._signals[signal].push(fnc);
 };
 /** signal(src, signal, ...) : void */
 Freja._aux.signal = function(src, signal) {
-
+	
 	try {
 		if(src._signals && src._signals[signal]) {
 			var sigs = src._signals[signal];
+			console.log(signal," sigs: ",sigs, sigs.length);
 			var args = [];
 			for (var i=2; i < arguments.length; i++) {
 				args.push(arguments[i]);
@@ -1048,10 +1045,10 @@ Freja._aux.signal = function(src, signal) {
 			for (var i=0; i < sigs.length; i++) {
 				try {
 					sigs[i].apply(src, args);
-				} catch (e) { /* squelch */ }
+				} catch (e) { console.log("error: ",e); }
 			}
-		}
-	} catch (e) { /* squelch */ }
+		} 
+	} catch (e) { console.log("error: ",e); }
 };
 /** createDeferred() : Deferred */
 Freja._aux.createDeferred = function() {
@@ -1457,6 +1454,7 @@ Freja.Model.prototype.reload = function() {
 		this.document = document;
 		this.ready = true;
 		Freja._aux.signal(this, "onload");
+		console.log('signal onload sent');
 	}, this);
 	var d = Freja.AssetManager.loadAsset(this.url, true);
 	d.addCallbacks(onload, Freja.AssetManager.onerror);
@@ -1523,6 +1521,7 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 		this.xslParameters = xslParameters;
 	};
 	Handler.prototype.trigger = function() {
+		console.log("trigger fires, scope:",this);
 		try {
 			if (!this.view.ready) {
 				Freja._aux.connect(this.view, "onload", Freja._aux.bind(this.trigger, this));
@@ -1530,6 +1529,7 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 			}
 			if (typeof(this.model) == "object" && this.model instanceof Freja.Model && !this.model.ready) {
 				Freja._aux.connect(this.model, "onload", Freja._aux.bind(this.trigger, this));
+				console.log('model not ready. Connect to onload, scope:',this);
 				return;
 			}
 			var model;

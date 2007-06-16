@@ -979,10 +979,16 @@ Freja._aux.connect = function(src, signal, fnc) {
 	if (!src._signals[signal]) {
 		src._signals[signal] = [];
 	}
-	// checks if the callback has already been registered with the same function  (Thx to Chris D)
-	for(var item=0; item < src._signals[signal].length;item++) {
-        if(src._signals[signal][item].toString() == fnc.toString()) return;
-    } 
+	/*
+	 * @TODO Check this
+	 * see: http://www.formassembly.com/forums/viewtopic.php?t=282&sid=189221aa89bf7245deb04bbfb8d3c7e9
+	 * 
+	 * // checks if the callback has already been registered with the same function
+	 * for(var item=0; item < src._signals[signal].length;item++) {
+	 * 	if(src._signals[signal][item].toString() == fnc.toString()) return;
+	 * } 
+	 */
+	 
     
 	src._signals[signal].push(fnc);
 };

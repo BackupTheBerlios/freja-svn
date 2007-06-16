@@ -90,7 +90,18 @@ Freja.Model.prototype.remove = function() {
 /**
   * @returns Freja._aux.Deferred
   */
-Freja.Model.prototype.reload = function() {
+Freja.Model.prototype.reload = function(url) {
+	
+	if(url) {
+		// Replace old url in cache with new url
+		for (var i=0; i < Freja.AssetManager.models.length; i++) {
+			if (Freja.AssetManager.models[i].url == this.url) {
+				Freja.AssetManager.models[i].url = url;
+			}
+		}
+		this.url = url;
+	}
+	
 	this.ready = false;
 	var onload = Freja._aux.bind(function(document) {
 		this.document = document;
