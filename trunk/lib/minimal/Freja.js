@@ -2,7 +2,7 @@
 
     Freja 2.1.1
 
-    Build $Thu, 29 Mar 2007 20:39:48 UTC$
+    Build $Thu, 30 Aug 2007 02:58:00 UTC$
 
     Target: minimal
 
@@ -1028,16 +1028,25 @@ Freja._aux.connect = function(src, signal, fnc) {
 	if (!src._signals[signal]) {
 		src._signals[signal] = [];
 	}
-	
- 	src._signals[signal].push(fnc);
+	/*
+	 * @TODO Check this
+	 * see: http://www.formassembly.com/forums/viewtopic.php?t=282&sid=189221aa89bf7245deb04bbfb8d3c7e9
+	 * 
+	 * // checks if the callback has already been registered with the same function
+	 * for(var item=0; item < src._signals[signal].length;item++) {
+	 * 	if(src._signals[signal][item].toString() == fnc.toString()) return;
+	 * } 
+	 */
+	 
+    
+	src._signals[signal].push(fnc);
 };
 /** signal(src, signal, ...) : void */
 Freja._aux.signal = function(src, signal) {
-	
+
 	try {
 		if(src._signals && src._signals[signal]) {
 			var sigs = src._signals[signal];
-			console.log(signal," sigs: ",sigs, sigs.length);
 			var args = [];
 			for (var i=2; i < arguments.length; i++) {
 				args.push(arguments[i]);
@@ -1045,10 +1054,10 @@ Freja._aux.signal = function(src, signal) {
 			for (var i=0; i < sigs.length; i++) {
 				try {
 					sigs[i].apply(src, args);
-				} catch (e) { console.log("error: ",e); }
+				} catch (e) { /* squelch */ }
 			}
-		} 
-	} catch (e) { console.log("error: ",e); }
+		}
+	} catch (e) { /* squelch */ }
 };
 /** createDeferred() : Deferred */
 Freja._aux.createDeferred = function() {
@@ -1405,11 +1414,12 @@ Freja.Model.prototype.updateFrom = function(view) {
 				this.set(values[0][i], values[1][i]);
 			} catch(x) {
 				// couldn't set the value.
+				// @TODO: Throw new Error.
 			}
 		}
 	}
 };
-/**
+/**
   * Writes the model back to the remote service
   * @returns Freja._aux.Deferred
   */
@@ -1448,13 +1458,23 @@ Freja.Model.prototype.remove = function() {
 /**
   * @returns Freja._aux.Deferred
   */
-Freja.Model.prototype.reload = function() {
+Freja.Model.prototype.reload = function(url) {
+	
+	if(url) {
+		// Replace old url in cache with new url
+		for (var i=0; i < Freja.AssetManager.models.length; i++) {
+			if (Freja.AssetManager.models[i].url == this.url) {
+				Freja.AssetManager.models[i].url = url;
+			}
+		}
+		this.url = url;
+	}
+	
 	this.ready = false;
 	var onload = Freja._aux.bind(function(document) {
 		this.document = document;
 		this.ready = true;
 		Freja._aux.signal(this, "onload");
-		console.log('signal onload sent');
 	}, this);
 	var d = Freja.AssetManager.loadAsset(this.url, true);
 	d.addCallbacks(onload, Freja.AssetManager.onerror);
@@ -1521,7 +1541,6 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 		this.xslParameters = xslParameters;
 	};
 	Handler.prototype.trigger = function() {
-		console.log("trigger fires, scope:",this);
 		try {
 			if (!this.view.ready) {
 				Freja._aux.connect(this.view, "onload", Freja._aux.bind(this.trigger, this));
@@ -1529,7 +1548,6 @@ Freja.View.prototype.render = function(model, placeholder, xslParameters) {
 			}
 			if (typeof(this.model) == "object" && this.model instanceof Freja.Model && !this.model.ready) {
 				Freja._aux.connect(this.model, "onload", Freja._aux.bind(this.trigger, this));
-				console.log('model not ready. Connect to onload, scope:',this);
 				return;
 			}
 			var model;

@@ -51,7 +51,7 @@ Freja.Model.prototype.updateFrom = function(view) {
 		}
 	}
 };
-/**
+/**
   * Writes the model back to the remote service
   * @returns Freja._aux.Deferred
   */
