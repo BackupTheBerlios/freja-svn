@@ -239,7 +239,7 @@ Freja._aux.hasSupportForXSLT=function(){
 return (typeof (XSLTProcessor)!="undefined");
 };
 Freja._aux.createQueryEngine=function(){
-if(Sarissa.IS_ENABLED_SELECT_NODES){
+if(Sarissa._SARISSA_IS_IE||Sarissa.IS_ENABLED_SELECT_NODES){
 return new Freja.QueryEngine.XPath();
 }else{
 return new Freja.QueryEngine.SimplePath();

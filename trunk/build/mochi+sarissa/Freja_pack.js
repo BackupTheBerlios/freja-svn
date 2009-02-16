@@ -5,7 +5,7 @@ if(typeof (Freja)=="undefined"){
 Freja={};
 }
 Freja.NAME="Freja";
-Freja.VERSION="2.1.1";
+Freja.VERSION="2.1.2";
 Freja.__repr__=function(){
 return "["+this.NAME+" "+this.VERSION+"]";
 };
@@ -174,7 +174,7 @@ Freja._aux.hasSupportForXSLT=function(){
 return (typeof (XSLTProcessor)!="undefined");
 };
 Freja._aux.createQueryEngine=function(){
-if(Sarissa.IS_ENABLED_SELECT_NODES){
+if(Sarissa._SARISSA_IS_IE||Sarissa.IS_ENABLED_SELECT_NODES){
 return new Freja.QueryEngine.XPath();
 }else{
 return new Freja.QueryEngine.SimplePath();
@@ -849,67 +849,151 @@ _a4.src=url;
 _a3.appendChild(_a4);
 return id;
 };
+if(Sarissa._SARISSA_HAS_DOM_FEATURE&&document.implementation.hasFeature("XPath","3.0")){
+SarissaNodeList=function(i){
+this.length=i;
+};
+SarissaNodeList.prototype=[];
+SarissaNodeList.prototype.constructor=Array;
+SarissaNodeList.prototype.item=function(i){
+return (i<0||i>=this.length)?null:this[i];
+};
+SarissaNodeList.prototype.expr="";
+if(window.XMLDocument&&(!XMLDocument.prototype.setProperty)){
+XMLDocument.prototype.setProperty=function(x,y){
+};
+}
+Sarissa.setXpathNamespaces=function(_a9,_aa){
+_a9._sarissa_useCustomResolver=true;
+var _ab=_aa.indexOf(" ")>-1?_aa.split(" "):[_aa];
+_a9._sarissa_xpathNamespaces=[];
+for(var i=0;i<_ab.length;i++){
+var ns=_ab[i];
+var _ae=ns.indexOf(":");
+var _af=ns.indexOf("=");
+if(_ae>0&&_af>_ae+1){
+var _b0=ns.substring(_ae+1,_af);
+var uri=ns.substring(_af+2,ns.length-1);
+_a9._sarissa_xpathNamespaces[_b0]=uri;
+}else{
+throw "Bad format on namespace declaration(s) given";
+}
+}
+};
+XMLDocument.prototype._sarissa_useCustomResolver=false;
+XMLDocument.prototype._sarissa_xpathNamespaces=[];
+XMLDocument.prototype.selectNodes=function(_b2,_b3,_b4){
+var _b5=this;
+var _b6;
+if(this._sarissa_useCustomResolver){
+_b6=function(_b7){
+var s=_b5._sarissa_xpathNamespaces[_b7];
+if(s){
+return s;
+}else{
+throw "No namespace URI found for prefix: '"+_b7+"'";
+}
+};
+}else{
+_b6=this.createNSResolver(this.documentElement);
+}
+var _b9=null;
+if(!_b4){
+var _ba=this.evaluate(_b2,(_b3?_b3:this),_b6,XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,null);
+var _bb=new SarissaNodeList(_ba.snapshotLength);
+_bb.expr=_b2;
+for(var i=0;i<_bb.length;i++){
+_bb[i]=_ba.snapshotItem(i);
+}
+_b9=_bb;
+}else{
+_b9=this.evaluate(_b2,(_b3?_b3:this),_b6,XPathResult.FIRST_ORDERED_NODE_TYPE,null).singleNodeValue;
+}
+return _b9;
+};
+Element.prototype.selectNodes=function(_bd){
+var doc=this.ownerDocument;
+if(doc.selectNodes){
+return doc.selectNodes(_bd,this);
+}else{
+throw "Method selectNodes is only supported by XML Elements";
+}
+};
+XMLDocument.prototype.selectSingleNode=function(_bf,_c0){
+var ctx=_c0?_c0:null;
+return this.selectNodes(_bf,ctx,true);
+};
+Element.prototype.selectSingleNode=function(_c2){
+var doc=this.ownerDocument;
+if(doc.selectSingleNode){
+return doc.selectSingleNode(_c2,this);
+}else{
+throw "Method selectNodes is only supported by XML Elements";
+}
+};
+Sarissa.IS_ENABLED_SELECT_NODES=true;
+}
 Freja.QueryEngine=function(){
 };
-Freja.QueryEngine.prototype.getElementById=function(_a5,id){
-var _a7=_a5.getElementsByTagName("*");
-for(var i=0;i<_a7.length;i++){
-if(_a7[i].getAttribute("id")==id){
-return _a7[i];
+Freja.QueryEngine.prototype.getElementById=function(_c4,id){
+var _c6=_c4.getElementsByTagName("*");
+for(var i=0;i<_c6.length;i++){
+if(_c6[i].getAttribute("id")==id){
+return _c6[i];
 }
 }
 };
-Freja.QueryEngine.prototype.get=function(_a9,_aa){
-var _ab=this._find(_a9,_aa);
-if(!_ab){
-throw new Error("Can't evaluate expression "+_aa);
+Freja.QueryEngine.prototype.get=function(_c8,_c9){
+var _ca=this._find(_c8,_c9);
+if(!_ca){
+throw new Error("Can't evaluate expression "+_c9);
 }
-switch(_ab.nodeType){
+switch(_ca.nodeType){
 case 1:
-if(_ab.firstChild&&(_ab.firstChild.nodeType==3||_ab.firstChild.nodeType==4)){
-return _ab.firstChild.nodeValue;
+if(_ca.firstChild&&(_ca.firstChild.nodeType==3||_ca.firstChild.nodeType==4)){
+return _ca.firstChild.nodeValue;
 }
 break;
 case 2:
-return _ab.nodeValue;
+return _ca.nodeValue;
 break;
 case 3:
 case 4:
-return _ab.nodeValue;
+return _ca.nodeValue;
 break;
 }
 return null;
 };
-Freja.QueryEngine.prototype.set=function(_ac,_ad,_ae){
-var _af=this._find(_ac,_ad);
-if(!_af){
-var _b0=_ad.substr(_ad.lastIndexOf("/")+1);
-if(_b0.charAt(0)=="@"){
-var _b1=_ad.substring(0,_ad.lastIndexOf("/"));
-var _b2=this._find(_ac,_b1);
-if(_b2){
-_b2.setAttribute(_b0.substr(1),_ae);
+Freja.QueryEngine.prototype.set=function(_cb,_cc,_cd){
+var _ce=this._find(_cb,_cc);
+if(!_ce){
+var _cf=_cc.substr(_cc.lastIndexOf("/")+1);
+if(_cf.charAt(0)=="@"){
+var _d0=_cc.substring(0,_cc.lastIndexOf("/"));
+var _d1=this._find(_cb,_d0);
+if(_d1){
+_d1.setAttribute(_cf.substr(1),_cd);
 return;
 }
 }
-throw new Error("Can't evaluate expression "+_ad);
+throw new Error("Can't evaluate expression "+_cc);
 }
-switch(_af.nodeType){
+switch(_ce.nodeType){
 case 1:
-if(_af.firstChild&&(_af.firstChild.nodeType==3||_af.firstChild.nodeType==4)){
-_af.firstChild.nodeValue=_ae;
+if(_ce.firstChild&&(_ce.firstChild.nodeType==3||_ce.firstChild.nodeType==4)){
+_ce.firstChild.nodeValue=_cd;
 }else{
-if(_ae!=""){
-_af.appendChild(_ac.createTextNode(_ae));
+if(_cd!=""){
+_ce.appendChild(_cb.createTextNode(_cd));
 }
 }
 break;
 case 2:
-_af.nodeValue=_ae;
+_ce.nodeValue=_cd;
 break;
 case 3:
 case 4:
-_af.nodeValue=_ae;
+_ce.nodeValue=_cd;
 break;
 }
 return;
@@ -917,76 +1001,76 @@ return;
 Freja.QueryEngine.XPath=function(){
 };
 Freja.Class.extend(Freja.QueryEngine.XPath,Freja.QueryEngine);
-Freja.QueryEngine.XPath.prototype._find=function(_b3,_b4){
-var _b5=_b3.selectSingleNode(_b4);
-return _b5;
+Freja.QueryEngine.XPath.prototype._find=function(_d2,_d3){
+var _d4=_d2.selectSingleNode(_d3);
+return _d4;
 };
 Freja.QueryEngine.SimplePath=function(){
 };
 Freja.Class.extend(Freja.QueryEngine.SimplePath,Freja.QueryEngine);
-Freja.QueryEngine.SimplePath.prototype._find=function(_b6,_b7){
-if(!_b7.match(/^[\d\w\/@\[\]=_\-']*$/)){
-throw new Error("Can't evaluate expression "+_b7);
+Freja.QueryEngine.SimplePath.prototype._find=function(_d5,_d6){
+if(!_d6.match(/^[\d\w\/@\[\]=_\-']*$/)){
+throw new Error("SimplePath can't evaluate expression: "+_d6);
 }
-var _b8=_b7.split("/");
-var _b9=_b6;
-var _ba=new RegExp("^@([\\d\\w]*)");
-var _bb=new RegExp("^([@\\d\\w]*)\\[([\\d]*)\\]$");
-var _bc=new RegExp("^([\\d\\w]+)\\[@([@\\d\\w]+)=['\"]{1}(.*)['\"]{1}\\]$");
-var _bd=null;
-var _be=0;
-for(var i=0;i<_b8.length;++i){
-var _c0=_b8[i];
-var _c1=_bc.exec(_c0);
-if(_c1){
-if(i>0&&_b8[i-1]==""){
-var cn=_b9.getElementsByTagName(_c1[1]);
+var _d7=_d6.split("/");
+var _d8=_d5;
+var _d9=new RegExp("^@([\\d\\w]*)");
+var _da=new RegExp("^([@\\d\\w]*)\\[([\\d]*)\\]$");
+var _db=new RegExp("^([\\d\\w]+)\\[@([@\\d\\w]+)=['\"]{1}(.*)['\"]{1}\\]$");
+var _dc=null;
+var _dd=0;
+for(var i=0;i<_d7.length;++i){
+var _df=_d7[i];
+var _e0=_db.exec(_df);
+if(_e0){
+if(i>0&&_d7[i-1]==""){
+var cn=_d8.getElementsByTagName(_e0[1]);
 }else{
-var cn=_b9.childNodes;
+var cn=_d8.childNodes;
 }
 for(var j=0,l=cn.length;j<l;j++){
-if(cn[j].nodeType==1&&cn[j].tagName==_c1[1]&&cn[j].getAttribute(_c1[2])==_c1[3]){
-_b9=cn[j];
+if(cn[j].nodeType==1&&cn[j].tagName==_e0[1]&&cn[j].getAttribute(_e0[2])==_e0[3]){
+_d8=cn[j];
 break;
 }
 }
 if(j==l){
-throw new Error("Can't evaluate expression "+_c0);
+throw new Error("SimplePath can't evaluate expression "+_df);
 }
 }else{
-_be=_bb.exec(_c0);
-if(_be){
-_c0=_be[1];
-_be=_be[2]-1;
+_dd=_da.exec(_df);
+if(_dd){
+_df=_dd[1];
+_dd=_dd[2]-1;
 }else{
-_be=0;
+_dd=0;
 }
-if(_c0!=""){
-_bd=_ba.exec(_c0);
-if(_bd){
-_b9=_b9.getAttributeNode(_bd[1]);
+if(_df!=""){
+_dc=_d9.exec(_df);
+if(_dc){
+_d8=_d8.getAttributeNode(_dc[1]);
 }else{
-_b9=_b9.getElementsByTagName(_c0).item(_be);
+_d8=_d8.getElementsByTagName(_df).item(_dd);
 }
 }
 }
 }
-if(_b9&&_b9.firstChild&&_b9.firstChild.nodeType==3){
-return _b9.firstChild;
+if(_d8&&_d8.firstChild&&_d8.firstChild.nodeType==3){
+return _d8.firstChild;
 }
-if(_b9&&_b9.firstChild&&_b9.firstChild.nodeType==4){
-return _b9.firstChild;
+if(_d8&&_d8.firstChild&&_d8.firstChild.nodeType==4){
+return _d8.firstChild;
 }
-if(!_b9){
-throw new Error("Can't evaluate expression "+_b7);
+if(!_d8){
+throw new Error("SimplePath can't evaluate expression "+_d6);
 }
-return _b9;
+return _d8;
 };
-Freja.Model=function(url,_c5){
+Freja.Model=function(url,_e4){
 this.url=url;
 this.ready=false;
 this.document=null;
-this._query=_c5;
+this._query=_e4;
 };
 Freja.Model.prototype.getElementById=function(id){
 if(this.document){
@@ -994,24 +1078,24 @@ return this._query.getElementById(this.document,id);
 }
 return null;
 };
-Freja.Model.prototype.get=function(_c7){
+Freja.Model.prototype.get=function(_e6){
 if(this.document){
-return this._query.get(this.document,_c7);
+return this._query.get(this.document,_e6);
 }
 return null;
 };
-Freja.Model.prototype.set=function(_c8,_c9){
+Freja.Model.prototype.set=function(_e7,_e8){
 if(this.document){
-return this._query.set(this.document,_c8,_c9);
+return this._query.set(this.document,_e7,_e8);
 }
 return null;
 };
-Freja.Model.prototype.updateFrom=function(_ca){
-var _cb=_ca.getValues();
-for(var i=0;i<_cb[0].length;++i){
-if(_cb[0][i].lastIndexOf("/")!=-1){
+Freja.Model.prototype.updateFrom=function(_e9){
+var _ea=_e9.getValues();
+for(var i=0;i<_ea[0].length;++i){
+if(_ea[0][i].lastIndexOf("/")!=-1){
 try{
-this.set(_cb[0][i],_cb[1][i]);
+this.set(_ea[0][i],_ea[1][i]);
 }
 catch(x){
 }
@@ -1020,9 +1104,9 @@ catch(x){
 };
 Freja.Model.prototype.save=function(){
 var url=this.url;
-var _ce=/^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
-if(_ce){
-url=_ce[1]+url;
+var _ed=/^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
+if(_ed){
+url=_ed[1]+url;
 }
 var d=Freja._aux.createDeferred();
 var req=Freja.AssetManager.openXMLHttpRequest("POST",url);
@@ -1036,9 +1120,9 @@ return d;
 };
 Freja.Model.prototype.remove=function(){
 var url=this.url;
-var _d2=/^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
-if(_d2){
-url=_d2[1]+url;
+var _f1=/^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
+if(_f1){
+url=_f1[1]+url;
 }
 var req=Freja.AssetManager.openXMLHttpRequest("DELETE",url);
 return Freja._aux.sendXMLHttpRequest(req);
@@ -1053,59 +1137,59 @@ Freja.AssetManager.models[i].url=url;
 this.url=url;
 }
 this.ready=false;
-var _d6=Freja._aux.bind(function(_d7){
-this.document=_d7;
+var _f5=Freja._aux.bind(function(_f6){
+this.document=_f6;
 this.ready=true;
 Freja._aux.signal(this,"onload");
 },this);
 var d=Freja.AssetManager.loadAsset(this.url,true);
-d.addCallbacks(_d6,Freja.AssetManager.onerror);
+d.addCallbacks(_f5,Freja.AssetManager.onerror);
 return d;
 };
-Freja.Model.DataSource=function(_d9,_da){
-this.createURL=_d9;
-this.indexURL=_da;
+Freja.Model.DataSource=function(_f8,_f9){
+this.createURL=_f8;
+this.indexURL=_f9;
 };
 Freja.Model.DataSource.prototype.select=function(){
 return getModel(this.indexURL);
 };
-Freja.Model.DataSource.prototype.create=function(_db){
+Freja.Model.DataSource.prototype.create=function(_fa){
 var url=this.createURL;
-var _dd=/^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
-if(_dd){
-url=_dd[1]+url;
+var _fc=/^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
+if(_fc){
+url=_fc[1]+url;
 }
 var req=Freja.AssetManager.openXMLHttpRequest("PUT",url);
-var _df={};
-for(var i=0,len=_db[0].length;i<len;++i){
-_df[_db[0][i]]=_db[1][i];
+var _fe={};
+for(var i=0,len=_fa[0].length;i<len;++i){
+_fe[_fa[0][i]]=_fa[1][i];
 }
-return Freja._aux.sendXMLHttpRequest(req,Freja._aux.xmlize(_df,"record"));
+return Freja._aux.sendXMLHttpRequest(req,Freja._aux.xmlize(_fe,"record"));
 };
-Freja.View=function(url,_e2){
+Freja.View=function(url,_101){
 this.url=url;
 this.ready=false;
 this.document=null;
-this._renderer=_e2;
+this._renderer=_101;
 this._destination=null;
 this.behaviors=[];
 this.placeholder=null;
 Freja._aux.connect(this,"onrendercomplete",Freja._aux.bind(this._connectBehavior,this));
 };
-Freja.View.prototype.render=function(_e3,_e4,_e5){
-if(typeof (_e4)=="undefined"){
-_e4=this.placeholder;
+Freja.View.prototype.render=function(_102,_103,_104){
+if(typeof (_103)=="undefined"){
+_103=this.placeholder;
 }
-if(typeof (_e5)=="undefined"){
-_e5=this.xslParameters;
+if(typeof (_104)=="undefined"){
+_104=this.xslParameters;
 }
-var _e6=function(_e7,_e8,_e9,_ea){
-this.model=_e7;
-this.view=_e8;
-this.deferred=_e9;
-this.xslParameters=_ea;
+var _105=function(_106,view,_108,_109){
+this.model=_106;
+this.view=view;
+this.deferred=_108;
+this.xslParameters=_109;
 };
-_e6.prototype.trigger=function(){
+_105.prototype.trigger=function(){
 try{
 if(!this.view.ready){
 Freja._aux.connect(this.view,"onload",Freja._aux.bind(this.trigger,this));
@@ -1115,32 +1199,32 @@ if(typeof (this.model)=="object"&&this.model instanceof Freja.Model&&!this.model
 Freja._aux.connect(this.model,"onload",Freja._aux.bind(this.trigger,this));
 return;
 }
-var _eb;
+var _10a;
 if(typeof (this.model)=="undefined"){
-_eb={document:Freja._aux.loadXML("<?xml version='1.0' ?><dummy/>")};
+_10a={document:Freja._aux.loadXML("<?xml version='1.0' ?><dummy/>")};
 }else{
 if(this.model instanceof Freja.Model){
-_eb=this.model;
+_10a=this.model;
 }else{
-_eb={document:Freja._aux.loadXML("<?xml version='1.0' ?>\n"+Freja._aux.xmlize(this.model,"item"))};
+_10a={document:Freja._aux.loadXML("<?xml version='1.0' ?>\n"+Freja._aux.xmlize(this.model,"item"))};
 }
 }
-var _ec=this.view._renderer.transform(_eb,this.view,this.xslParameters);
-_ec.addCallback(Freja._aux.bind(function(_ed){
-if(typeof _ed=="string"){
-this._destination.innerHTML=_ed;
+var _10b=this.view._renderer.transform(_10a,this.view,this.xslParameters);
+_10b.addCallback(Freja._aux.bind(function(html){
+if(typeof html=="string"){
+this._destination.innerHTML=html;
 }else{
 this._destination.innerHTML="";
-this._destination.appendChild(_ed);
+this._destination.appendChild(html);
 }
 },this.view));
-_ec.addCallback(Freja._aux.bind(function(){
+_10b.addCallback(Freja._aux.bind(function(){
 Freja._aux.signal(this,"onrendercomplete",this._destination);
 },this.view));
-_ec.addCallback(Freja._aux.bind(function(){
+_10b.addCallback(Freja._aux.bind(function(){
 this.deferred.callback();
 },this));
-_ec.addErrback(Freja._aux.bind(function(ex){
+_10b.addErrback(Freja._aux.bind(function(ex){
 this.deferred.errback(ex);
 },this));
 }
@@ -1150,13 +1234,13 @@ this.deferred.errback(ex);
 };
 var d=Freja._aux.createDeferred();
 try{
-if(typeof (_e4)=="object"){
-this._destination=_e4;
+if(typeof (_103)=="object"){
+this._destination=_103;
 }else{
-this._destination=document.getElementById(_e4);
+this._destination=document.getElementById(_103);
 }
 this._destination.innerHTML=Freja.AssetManager.THROBBER_HTML;
-var h=new _e6(_e3,this,d,_e5);
+var h=new _105(_102,this,d,_104);
 h.trigger();
 }
 catch(ex){
@@ -1164,49 +1248,49 @@ d.errback(ex);
 }
 return d;
 };
-Freja.View.prototype._connectBehavior=function(_f1){
+Freja.View.prototype._connectBehavior=function(_110){
 try{
-var _f2=function(_f3,_f4,_f5){
-Freja._aux.connect(_f3,_f4,Freja._aux.bind(function(e){
-var _f7=false;
+var _111=function(node,_113,_114){
+Freja._aux.connect(node,_113,Freja._aux.bind(function(e){
+var _116=false;
 try{
-_f7=_f5(this);
+_116=_114(this);
 }
 catch(ex){
 throw new Error("An error ocurred in user handler.\n"+ex.message);
 }
 finally{
-if(!_f7){
+if(!_116){
 e.stop();
 }
 }
-},_f3));
+},node));
 };
-var _f8=function(_f9,_fa){
-for(var i=0,c=_f9.childNodes,l=c.length;i<l;++i){
-var _fc=c[i];
-if(_fc.nodeType==1){
-if(_fc.className){
-var _fd=_fc.className.split(" ");
-for(var j=0;j<_fd.length;j++){
-var _ff=_fa[_fd[j]];
-if(_ff){
-for(var _100 in _ff){
-if(_100=="init"){
-_ff.init(_fc);
+var _117=function(node,_119){
+for(var i=0,c=node.childNodes,l=c.length;i<l;++i){
+var _11b=c[i];
+if(_11b.nodeType==1){
+if(_11b.className){
+var _11c=_11b.className.split(" ");
+for(var j=0;j<_11c.length;j++){
+var _11e=_119[_11c[j]];
+if(_11e){
+for(var _11f in _11e){
+if(_11f=="init"){
+_11e.init(_11b);
 }else{
-_f2(_fc,_100,_ff[_100]);
+_111(_11b,_11f,_11e[_11f]);
 }
 }
 }
 }
 }
-_f8(_fc,_fa);
+_117(_11b,_119);
 }
 }
 };
 for(var ids in this.behaviors){
-_f8(_f1,this.behaviors);
+_117(_110,this.behaviors);
 break;
 }
 }
@@ -1222,10 +1306,10 @@ Freja.View.Renderer=function(){
 Freja.View.Renderer.XSLTransformer=function(){
 };
 Freja.Class.extend(Freja.View.Renderer.XSLTransformer,Freja.View.Renderer);
-Freja.View.Renderer.XSLTransformer.prototype.transform=function(_102,view,_104){
+Freja.View.Renderer.XSLTransformer.prototype.transform=function(_121,view,_123){
 var d=Freja._aux.createDeferred();
 try{
-var html=Freja._aux.transformXSL(_102.document,view.document,_104);
+var html=Freja._aux.transformXSL(_121.document,view.document,_123);
 if(!html){
 d.errback(new Error("XSL Transformation error."));
 }else{
@@ -1241,16 +1325,16 @@ Freja.View.Renderer.RemoteXSLTransformer=function(url){
 this.url=url;
 };
 Freja.Class.extend(Freja.View.Renderer.RemoteXSLTransformer,Freja.View.Renderer);
-Freja.View.Renderer.RemoteXSLTransformer.prototype.transform=function(_108,view,_10a){
+Freja.View.Renderer.RemoteXSLTransformer.prototype.transform=function(_127,view,_129){
 var d=Freja._aux.createDeferred();
-var _10c=view.url;
-var _10d="xslFile="+encodeURIComponent(_10c)+"&xmlData="+encodeURIComponent(Freja._aux.serializeXML(_108.document));
-var _10e="";
-for(var _10f in _10a){
-_10e+=encodeURIComponent(_10f+","+_10a[_10f]);
+var _12b=view.url;
+var _12c="xslFile="+encodeURIComponent(_12b)+"&xmlData="+encodeURIComponent(Freja._aux.serializeXML(_127.document));
+var _12d="";
+for(var _12e in _129){
+_12d+=encodeURIComponent(_12e+","+_129[_12e]);
 }
-if(_10e.length>0){
-_10d=_10d+"&xslParam="+_10e;
+if(_12d.length>0){
+_12c=_12c+"&xslParam="+_12d;
 }
 var req=Freja.AssetManager.openXMLHttpRequest("POST",Freja.AssetManager.XSLT_SERVICE_URL);
 req.onreadystatechange=function(){
@@ -1262,7 +1346,7 @@ d.errback(req.responseText);
 }
 }
 };
-req.send(_10d);
+req.send(_12c);
 return d;
 };
 Freja.UndoHistory=function(){
@@ -1271,40 +1355,40 @@ this.maxLength=5;
 this._position=0;
 this._undoSteps=0;
 };
-Freja.UndoHistory.prototype.add=function(_111){
-var _112=this._position%this.maxLength;
-var _113=_111.document;
-this.cache[_112]={};
-this.cache[_112].model=_111;
-this.cache[_112].document=Freja._aux.cloneXMLDocument(_113);
-if(!this.cache[_112].document){
+Freja.UndoHistory.prototype.add=function(_130){
+var _131=this._position%this.maxLength;
+var _132=_130.document;
+this.cache[_131]={};
+this.cache[_131].model=_130;
+this.cache[_131].document=Freja._aux.cloneXMLDocument(_132);
+if(!this.cache[_131].document){
 throw new Error("Couldn't add to history.");
 }else{
 this._position++;
-var _114=_112;
+var _133=_131;
 while(this._undoSteps>0){
-_114=(_114+1)%this.maxLength;
-this.cache[_114]={};
+_133=(_133+1)%this.maxLength;
+this.cache[_133]={};
 this._undoSteps--;
 }
-return _112;
+return _131;
 }
 };
-Freja.UndoHistory.prototype.undo=function(_115){
+Freja.UndoHistory.prototype.undo=function(_134){
 if(this._undoSteps<this.cache.length){
 this._undoSteps++;
 this._position--;
 if(this._position<0){
 this._position=this.maxLength-1;
 }
-var _116=this.cache[this._position].model;
+var _135=this.cache[this._position].model;
 if(this.cache[this._position].document){
-_116.document=this.cache[this._position].document;
+_135.document=this.cache[this._position].document;
 }else{
 throw new Error("The model's DOMDocument wasn't properly copied into the history");
 }
-if(typeof (_115)!="undefined"&&_115>1){
-this.undo(_115-1);
+if(typeof (_134)!="undefined"&&_134>1){
+this.undo(_134-1);
 }
 }else{
 throw new Error("Nothing to undo");
@@ -1314,8 +1398,8 @@ Freja.UndoHistory.prototype.redo=function(){
 if(this._undoSteps>0){
 this._undoSteps--;
 this._position=(this._position+1)%this.maxLength;
-var _117=this.cache[this._position].model;
-_117.document=this.cache[this._position].document;
+var _136=this.cache[this._position].model;
+_136.document=this.cache[this._position].document;
 }else{
 throw new Error("Nothing to redo");
 }
@@ -1351,12 +1435,12 @@ return this.models[i];
 }
 }
 var m=new Freja.Model(url,Freja._aux.createQueryEngine());
-var _11b=Freja._aux.bind(function(_11c){
-this.document=_11c;
+var _13a=Freja._aux.bind(function(_13b){
+this.document=_13b;
 this.ready=true;
 Freja._aux.signal(this,"onload");
 },m);
-this.loadAsset(url,true).addCallbacks(_11b,Freja.AssetManager.onerror);
+this.loadAsset(url,true).addCallbacks(_13a,Freja.AssetManager.onerror);
 this.models.push(m);
 return m;
 };
@@ -1367,61 +1451,61 @@ return this.views[i];
 }
 }
 var v=new Freja.View(url,this.createRenderer());
-var _120=Freja._aux.bind(function(_121){
-this.document=_121;
+var _13f=Freja._aux.bind(function(_140){
+this.document=_140;
 this.ready=true;
 Freja._aux.signal(this,"onload");
 },v);
-this.loadAsset(url,false).addCallbacks(_120,Freja.AssetManager.onerror);
+this.loadAsset(url,false).addCallbacks(_13f,Freja.AssetManager.onerror);
 this.views.push(v);
 return v;
 };
-Freja.AssetManager.openXMLHttpRequest=function(_122,url){
-var _124=null;
-if(Freja.AssetManager.HTTP_METHOD_TUNNEL&&_122!="GET"&&_122!="POST"){
-_124=_122;
-_122="POST";
+Freja.AssetManager.openXMLHttpRequest=function(_141,url){
+var _143=null;
+if(Freja.AssetManager.HTTP_METHOD_TUNNEL&&_141!="GET"&&_141!="POST"){
+_143=_141;
+_141="POST";
 }
-var req=Freja._aux.openXMLHttpRequest(_122,url,Freja.AssetManager.HTTP_REQUEST_TYPE=="async",Freja.AssetManager._username,Freja.AssetManager._password);
-if(_124){
-req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL,_124);
+var req=Freja._aux.openXMLHttpRequest(_141,url,Freja.AssetManager.HTTP_REQUEST_TYPE=="async",Freja.AssetManager._username,Freja.AssetManager._password);
+if(_143){
+req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL,_143);
 }
 return req;
 };
-Freja.AssetManager.setCredentials=function(_126,_127){
-this._username=_126;
-this._password=_127;
+Freja.AssetManager.setCredentials=function(_145,_146){
+this._username=_145;
+this._password=_146;
 };
-Freja.AssetManager.loadAsset=function(url,_129){
-var _12a=/^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
-if(_12a){
-url=_12a[1]+url;
+Freja.AssetManager.loadAsset=function(url,_148){
+var _149=/^(file:\/\/.*\/)([^\/]*)$/.exec(window.location.href);
+if(_149){
+url=_149[1]+url;
 }
 var d=Freja._aux.createDeferred();
-var _12c=function(_12d){
+var _14b=function(_14c){
 try{
-if(_12d.responseText==""){
+if(_14c.responseText==""){
 throw new Error("Empty response.");
 }
-if(_12d.responseXML.xml==""){
-var _12e=Freja._aux.loadXML(_12d.responseText);
+if(_14c.responseXML.xml==""){
+var _14d=Freja._aux.loadXML(_14c.responseText);
 }else{
-var _12e=_12d.responseXML;
+var _14d=_14c.responseXML;
 }
 }
 catch(ex){
 d.errback(ex);
 }
-if(window.document.all){
+if(Freja.AssetManager.HTTP_REQUEST_TYPE=="async"&&window.document.all){
 setTimeout(function(){
-d.callback(_12e);
+d.callback(_14d);
 },1);
 }else{
-d.callback(_12e);
+d.callback(_14d);
 }
 };
 try{
-if(_129&&Freja.AssetManager.HTTP_METHOD_TUNNEL){
+if(_148&&Freja.AssetManager.HTTP_METHOD_TUNNEL){
 var req=Freja._aux.openXMLHttpRequest("POST",url,Freja.AssetManager.HTTP_REQUEST_TYPE=="async",Freja.AssetManager._username,Freja.AssetManager._password);
 req.setRequestHeader(Freja.AssetManager.HTTP_METHOD_TUNNEL,"GET");
 req.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
@@ -1430,12 +1514,12 @@ var req=Freja._aux.openXMLHttpRequest("GET",url,Freja.AssetManager.HTTP_REQUEST_
 }
 var comm=Freja._aux.sendXMLHttpRequest(req);
 if(Freja.AssetManager.HTTP_REQUEST_TYPE=="async"){
-comm.addCallbacks(_12c,function(req){
+comm.addCallbacks(_14b,function(req){
 d.errback(new Error("Request failed:"+req.status));
 });
 }else{
 if(req.status==0||req.status==200||req.status==201||req.status==304){
-_12c(req);
+_14b(req);
 }else{
 d.errback(new Error("Request failed:"+req.status));
 }
