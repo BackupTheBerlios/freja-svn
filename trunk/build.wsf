@@ -65,6 +65,10 @@
 				var filename = AUXILIARY;
 			} else if (SUBMODULES[i] == 'SARISSA') {
 				var filename = srcDir + "/dependencies/sarissa.js" ;
+				var file = FileSystem.openTextFile(filename, 1, -2);
+				source += "\n" + file.readAll();
+				file.close();
+				var filename = srcDir + "/dependencies/sarissa_ieemu_xpath.js" ;
 			} else {
 				var filename = srcDir + "/" + SUBMODULES[i] + ".js";
 			}
