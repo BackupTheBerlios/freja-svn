@@ -96,7 +96,7 @@ Freja.Class.extend(Freja.QueryEngine.SimplePath, Freja.QueryEngine);
 Freja.QueryEngine.SimplePath.prototype._find = function(document, expression) {
 	
 	if (!expression.match(/^[\d\w\/@\[\]=_\-']*$/)) {
-		throw new Error("Can't evaluate expression " + expression);
+		throw new Error("SimplePath can't evaluate expression: " + expression);
 	}
 	var parts = expression.split("/");
 	var node = document;
@@ -123,7 +123,7 @@ Freja.QueryEngine.SimplePath.prototype._find = function(document, expression) {
 				}
 			}
 			if (j==l)
-				throw new Error("Can't evaluate expression " + part);
+				throw new Error("SimplePath can't evaluate expression " + part);
 		}
 		else {
 			offset = regOffset.exec(part);
@@ -151,7 +151,7 @@ Freja.QueryEngine.SimplePath.prototype._find = function(document, expression) {
 	}
 
 	if (!node) {
-		throw new Error("Can't evaluate expression " + expression);
+		throw new Error("SimplePath can't evaluate expression " + expression);
 	}
 	return node;
 };

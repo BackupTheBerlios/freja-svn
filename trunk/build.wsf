@@ -17,8 +17,8 @@
 	if (dialog.ShowOpen()) {
 		var AUXILIARY = dialog.FileName;
 		var AUXILIARY_FOLDER = AUXILIARY.match(/\\([^\\]*)\.js$/)[1];
-		var outfile = cwd + "\\lib\\" + AUXILIARY_FOLDER + "\\Freja.js";
-		var outfile_packed = cwd + "\\lib\\" + AUXILIARY_FOLDER + "\\Freja_pack.js";
+		var outfile = cwd + "\\build\\" + AUXILIARY_FOLDER + "\\Freja.js";
+		var outfile_packed = cwd + "\\build\\" + AUXILIARY_FOLDER + "\\Freja_pack.js";
 		try {
 			FileSystem.deleteFile(outfile);
 			FileSystem.deleteFile(outfile_packed);
@@ -33,6 +33,7 @@
 		var SUBMODULES = [
 			"Freja",
 			"AUXILIARY",
+			"SARISSA",
 			"QueryEngine",
 			"Model",
 			"View",
@@ -62,6 +63,8 @@
 		for (var i=0; i < SUBMODULES.length; ++i) {
 			if (SUBMODULES[i] == 'AUXILIARY') {
 				var filename = AUXILIARY;
+			} else if (SUBMODULES[i] == 'SARISSA') {
+				var filename = srcDir + "/dependencies/sarissa.js" ;
 			} else {
 				var filename = srcDir + "/" + SUBMODULES[i] + ".js";
 			}

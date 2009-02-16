@@ -26,6 +26,7 @@ tests.test_Model = function (t) {
 	Freja.AssetManager.HTTP_REQUEST_TYPE = "sync";
 
 	var model = Freja.AssetManager.getModel("data/model.xml");
+	
 	t.ok(model instanceof Freja.Model);
 	t.is(model.ready, true, "state should be ready (loaded)");
 	t.is(typeof(model.document), "object", "the document shouldn't be null");

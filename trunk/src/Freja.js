@@ -5,7 +5,7 @@ if (typeof(Freja) == "undefined") {
 	Freja = {};
 }
 Freja.NAME = "Freja";
-Freja.VERSION = "2.1.1";
+Freja.VERSION = "2.1.2";
 Freja.__repr__ = function () {
 	return "[" + this.NAME + " " + this.VERSION + "]";
 };

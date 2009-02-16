@@ -138,7 +138,7 @@ Freja.AssetManager.loadAsset = function(url, preventCaching) {
 		} catch (ex) {
 			d.errback(ex);
 		}
-		if(window.document.all) { 				
+		if(Freja.AssetManager.HTTP_REQUEST_TYPE == "async" && window.document.all) { 				
 			// Weird bug in IE6 when assets are loaded from local file system.
 			// Despite the async request, the document is loaded and the onload signal is sent 
 			// before the getModel function exits (giving no chance to attach a handler to onload).
