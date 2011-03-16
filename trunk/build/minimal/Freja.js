@@ -2,7 +2,7 @@
 
     Freja 2.1.2
 
-    Build $Mon, 16 Feb 2009 20:43:23 UTC$
+    Build $Wed, 16 Mar 2011 21:57:27 UTC$
 
     Target: minimal
 
@@ -1618,10 +1618,11 @@ Freja.QueryEngine.prototype.get = function(document, expression) {
 	switch(node.nodeType) {
 		case 1: /* element */
 			// return content of text nodes
-			// @TO-DO: return more than just firstchild?
-			if(node.firstChild && (node.firstChild.nodeType == 3 || node.firstChild.nodeType == 4)) {
-				return node.firstChild.nodeValue;
-			}
+			if(typeof(node.textContent) != "undefined") { 
+			 	return node.textContent;  
+			} else if(node.firstChild && (node.firstChild.nodeType == 3 || node.firstChild.nodeType == 4)) { 
+			 	return node.firstChild.nodeValue;  
+			}   
 			break;
 		case 2: /* Attribute */
 			return node.nodeValue;
@@ -1657,12 +1658,17 @@ Freja.QueryEngine.prototype.set = function(document, expression, value) {
 	// Expression succesfully evaluated. Set content
 	switch(node.nodeType) {
 		case 1: /* element */
-			// @TO-DO: set more than just firstchild			
-			if(node.firstChild && (node.firstChild.nodeType == 3 || node.firstChild.nodeType == 4)) {
-				node.firstChild.nodeValue = value;
-			} else {
-				if(value!="") // prevent a subsequent IE7/MSXML3 crash in view rendering.
-					node.appendChild(document.createTextNode(value));
+			if(typeof(node.textContent) != "undefined") {  
+				// use textContent if available. Prevents 4k limit issue in FF  
+			 	// see: http://www.coderholic.com/firefox-4k-xml-node-limit/    
+			 	node.textContent = value;   
+			} else {   
+			 	if(node.firstChild && (node.firstChild.nodeType == 3 || node.firstChild.nodeType == 4)) {  
+			 		node.firstChild.nodeValue = value;  
+			 	} else {  
+			 		if(value!="") // prevent a subsequent IE7/MSXML3 crash in view rendering.  
+			 			node.appendChild(document.createTextNode(value));  
+			 	}
 			}
 			break;
 		case 2: /* Attribute */

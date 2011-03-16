@@ -1057,8 +1057,12 @@ throw new Error("Can't evaluate expression "+_e4);
 }
 switch(_e5.nodeType){
 case 1:
+if(typeof (_e5.textContent)!="undefined"){
+return _e5.textContent;
+}else{
 if(_e5.firstChild&&(_e5.firstChild.nodeType==3||_e5.firstChild.nodeType==4)){
 return _e5.firstChild.nodeValue;
+}
 }
 break;
 case 2:
@@ -1087,11 +1091,15 @@ throw new Error("Can't evaluate expression "+_e7);
 }
 switch(_e9.nodeType){
 case 1:
+if(typeof (_e9.textContent)!="undefined"){
+_e9.textContent=_e8;
+}else{
 if(_e9.firstChild&&(_e9.firstChild.nodeType==3||_e9.firstChild.nodeType==4)){
 _e9.firstChild.nodeValue=_e8;
 }else{
 if(_e8!=""){
 _e9.appendChild(_e6.createTextNode(_e8));
+}
 }
 }
 break;
